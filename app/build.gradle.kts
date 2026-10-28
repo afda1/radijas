@@ -1,16 +1,15 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
-  alias(libs.plugins.roborazzi)
 }
 
 android {
-  namespace = "cc.skysparkle.fogwave"
+  namespace = "lt.radijas.tv"
 
   compileSdk { version = release(37) }
 
   defaultConfig {
-    applicationId = "cc.skysparkle.fogwave"
+    applicationId = "lt.radijas.tv"
     minSdk = 24
     targetSdk = 36
     versionCode = 11
@@ -18,16 +17,8 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    // Library versions shown under About -> Licenses, taken from the version catalog so they
-    // always match what is actually bundled.
-    buildConfigField("String", "COMPOSE_BOM_VERSION", "\"${libs.versions.composeBom.get()}\"")
-    buildConfigField("String", "ACTIVITY_VERSION", "\"${libs.versions.activityCompose.get()}\"")
-    buildConfigField("String", "CORE_KTX_VERSION", "\"${libs.versions.coreKtx.get()}\"")
-    buildConfigField("String", "LIFECYCLE_VERSION", "\"${libs.versions.lifecycleRuntimeCompose.get()}\"")
     buildConfigField("String", "MEDIA3_VERSION", "\"${libs.versions.media3.get()}\"")
-    buildConfigField("String", "COROUTINES_VERSION", "\"${libs.versions.kotlinxCoroutinesAndroid.get()}\"")
     buildConfigField("String", "KOTLIN_VERSION", "\"${libs.versions.kotlin.get()}\"")
-    buildConfigField("String", "COIL_VERSION", "\"${libs.versions.coilCompose.get()}\"")
   }
 
   // Release signing is applied only when a keystore is available, so anyone (including F-Droid,
@@ -83,7 +74,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-  implementation(libs.coil.compose)
+  implementation(libs.androidx.tv.material)
   implementation(libs.androidx.media3.exoplayer)
   implementation(libs.androidx.media3.common)
   implementation(libs.androidx.media3.session)
@@ -94,9 +85,6 @@ dependencies {
   testImplementation(libs.androidx.junit)
   testImplementation(libs.junit)
   testImplementation(libs.robolectric)
-  testImplementation(libs.roborazzi)
-  testImplementation(libs.roborazzi.compose)
-  testImplementation(libs.roborazzi.junit.rule)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
