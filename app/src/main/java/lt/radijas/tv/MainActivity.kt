@@ -4,22 +4,19 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
-import androidx.tv.material3.darkColorScheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
 import lt.radijas.tv.player.RadioPlayerManager
+import lt.radijas.tv.ui.NowPlayingScreen
+import lt.radijas.tv.ui.theme.RadijasTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var repository: RadioRepository
     private lateinit var playerManager: RadioPlayerManager
-    private var currentStation: RadioStation? = null
+    private var currentStation by mutableStateOf<RadioStation?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,9 +30,14 @@ class MainActivity : ComponentActivity() {
         playerManager.playStation(station)
 
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme(background = Color(0xFF141218))) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Radijas", color = Color(0xFFF2EDF2))
+            RadijasTheme {
+                currentStation?.let { station ->
+                    NowPlayingScreen(
+                        station = station,
+                        stations = repository.stations,
+                        // Task 5 wires OK to playback.
+                        onSelect = {}
+                    )
                 }
             }
         }
