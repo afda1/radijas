@@ -15,7 +15,6 @@ fun RadioStation.toMediaItem(context: Context): MediaItem {
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(name)
-                .setArtist(context.getString(descriptionRes))
                 .setStation(name)
                 .setArtworkUri(artworkUri)
                 .setIsBrowsable(false)

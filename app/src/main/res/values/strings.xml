@@ -3,30 +3,4 @@
 
     <string name="stream_unavailable">Srautas laikinai nepasiekiamas</string>
     <string name="network_unavailable">Nėra interneto ryšio</string>
-
-    <!-- Still referenced by data/model/RadioStation.kt and data/repository/RadioRepository.kt;
-         Task 3 trims those types and removes these entries with them. -->
-    <string name="station_desc_zip">Hit music • Lithuania</string>
-    <string name="station_desc_powerhit">Dance • Pop • Top Hits</string>
-    <string name="station_desc_powerhitgold">Gold hits • Dance classics</string>
-    <string name="station_desc_rock">Rock music • Lithuania</string>
-    <string name="station_desc_relax">Relaxing easy listening</string>
-    <string name="station_desc_lietus">Lithuanian music</string>
-    <string name="station_desc_m1">Popular music</string>
-    <string name="station_desc_plus">Music &amp; classic hits</string>
-    <string name="station_desc_goldfm">Golden hits</string>
-    <string name="station_desc_rc">Radiocentras • Lithuania</string>
-    <string name="genre_hits">Hits</string>
-    <string name="genre_pop">Pop</string>
-    <string name="genre_dance">Dance</string>
-    <string name="genre_oldies">Oldies</string>
-    <string name="genre_rock">Rock</string>
-    <string name="genre_easy_listening">Easy listening</string>
-    <string name="genre_lithuanian">Lithuanian music</string>
-    <string name="tab_radio">Radio</string>
-    <string name="tab_favorites">Favorites</string>
-    <string name="tab_about">About</string>
-    <string name="extra_tab_recent">Recently Played</string>
-    <string name="extra_tab_similar">Similar</string>
-    <string name="extra_tab_info">Info</string>
 </resources>

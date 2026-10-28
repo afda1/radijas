@@ -209,14 +209,6 @@ class FogwavePlaybackService : MediaLibraryService() {
 
     private fun scheduleReconnect(immediate: Boolean = false) {
         retryJob?.cancel()
-        if (!immediate && retryAttempt >= MAX_RETRY_ATTEMPTS) {
-            // Give up instead of keeping the device busy forever; the error stays visible and a tap
-            // on play starts over.
-            Log.w(TAG, "Reconnect abandoned after $retryAttempt attempts")
-            retryAttempt = 0
-            player.pause()
-            return
-        }
         val delayMs = if (immediate) 0L else retryDelaysMs.getOrElse(retryAttempt) { retryDelaysMs.last() }
         retryAttempt++
         Log.d(TAG, "Reconnect scheduled in ${delayMs}ms (attempt=$retryAttempt)")
@@ -348,7 +340,6 @@ class FogwavePlaybackService : MediaLibraryService() {
     companion object {
         private const val ROOT_ID = "fogwave_root"
         private const val TAG = "FogwavePlaybackService"
-        private const val MAX_RETRY_ATTEMPTS = 12
         private const val LIVE_RESYNC_AFTER_MS = 30_000L
     }
 }

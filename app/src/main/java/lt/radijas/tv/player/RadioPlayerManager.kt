@@ -144,6 +144,18 @@ class RadioPlayerManager(private val context: Context) {
         controller?.pause()
     }
 
+    fun stop() {
+        // A station that is still waiting for the controller must not start playing after the user left.
+        pendingStation = null
+        // Pause first: the service only reschedules a reconnect while playWhenReady, so this also
+        // cancels a retry that was already in flight.
+        controller?.pause()
+        controller?.stop()
+        controller?.clearMediaItems()
+        _playerState.value = PlayerState.Idle
+        _currentMediaId.value = null
+    }
+
     fun togglePlay() {
         when (_playerState.value) {
             is PlayerState.Playing, is PlayerState.Connecting -> pause()
