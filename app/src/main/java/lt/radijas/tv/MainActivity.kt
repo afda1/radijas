@@ -2,21 +2,38 @@ package lt.radijas.tv
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
+import lt.radijas.tv.player.PlayerState
 import lt.radijas.tv.player.RadioPlayerManager
 import lt.radijas.tv.ui.NowPlayingScreen
+import lt.radijas.tv.ui.NowPlayingUiState
+import lt.radijas.tv.ui.PlayerStatus
+import lt.radijas.tv.ui.playerStatus
 import lt.radijas.tv.ui.theme.RadijasTheme
 
 class MainActivity : ComponentActivity() {
     private lateinit var repository: RadioRepository
     private lateinit var playerManager: RadioPlayerManager
     private var currentStation by mutableStateOf<RadioStation?>(null)
+
+    // Elapsed-realtime mark of when playback last stopped being `Playing`. Wall clock is useless
+    // here: it can jump, and the user cares about "how long have I been staring at a silent TV".
+    private var silentSinceMs by mutableLongStateOf(SystemClock.elapsedRealtime())
+    private var silentForMs by mutableLongStateOf(0L)
+    private var wasPlaying by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,15 +48,74 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RadijasTheme {
-                currentStation?.let { station ->
+                val playerState by playerManager.playerState.collectAsStateWithLifecycle()
+                val playWhenReady by playerManager.playWhenReady.collectAsStateWithLifecycle()
+
+                LaunchedEffect(playerState) { trackSilence(playerState) }
+
+                val status = playerStatus(playerState, playWhenReady, silentForMs)
+                // Read through a State so the callback below can stay remembered (stable) while
+                // still seeing the newest status: a new lambda every tick would recompose every
+                // station tile and undo the tile-level `remember`.
+                val latestStatus = rememberUpdatedState(status)
+                val onSelect = remember(playerManager) {
+                    { selected: RadioStation ->
+                        when (latestStatus.value) {
+                            // The stream is already dead and the retry loop is the thing to kick.
+                            PlayerStatus.NO_CONNECTION, PlayerStatus.PAUSED -> playerManager.retry()
+                            else -> selectStation(selected)
+                        }
+                    }
+                }
+
+                currentStation?.let { selectedStation ->
                     NowPlayingScreen(
-                        station = station,
+                        uiState = NowPlayingUiState(station = selectedStation, status = status),
                         stations = repository.stations,
-                        // Task 5 wires OK to playback.
-                        onSelect = {}
+                        onSelect = onSelect
                     )
                 }
             }
+        }
+    }
+
+    private fun selectStation(station: RadioStation) {
+        currentStation = station
+        repository.setLastStationId(station.id)
+        playerManager.playStation(station)
+    }
+
+    /**
+     * Keeps [silentForMs] honest: zero while playing, then the time since playback stopped.
+     *
+     * The tick drives the `RECONNECTING` -> `NO_CONNECTION` threshold, so it has to keep running
+     * while the player is silent even though nothing else on screen changes.
+     */
+    private suspend fun trackSilence(state: PlayerState) {
+        when (state) {
+            is PlayerState.Playing -> {
+                wasPlaying = true
+                silentSinceMs = SystemClock.elapsedRealtime()
+                silentForMs = 0L
+                return
+            }
+            // Nothing is being attempted (stopped): not silence, and no reason to keep a
+            // one-second tick alive while the activity sits in the background.
+            is PlayerState.Idle -> {
+                wasPlaying = false
+                silentSinceMs = SystemClock.elapsedRealtime()
+                silentForMs = 0L
+                return
+            }
+            else -> Unit
+        }
+        if (wasPlaying) {
+            silentSinceMs = SystemClock.elapsedRealtime()
+        }
+        wasPlaying = false
+        while (true) {
+            silentForMs = SystemClock.elapsedRealtime() - silentSinceMs
+            delay(SILENCE_TICK_MS)
         }
     }
 
@@ -68,5 +144,9 @@ class MainActivity : ComponentActivity() {
             playerManager.release()
         }
         super.onDestroy()
+    }
+
+    private companion object {
+        const val SILENCE_TICK_MS = 1_000L
     }
 }

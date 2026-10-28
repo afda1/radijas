@@ -1,7 +1,9 @@
 package lt.radijas.tv.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,9 +37,16 @@ import lt.radijas.tv.data.model.RadioStation
  *
  * Deliberately has no `clickable`, `focusable` or `onKeyEvent` modifier: the shelf below is the
  * screen's only focus zone, so the D-pad can never strand focus on the hero.
+ *
+ * The status line is the honest part: it says what the player is actually doing, including the
+ * states where nothing is audible.
  */
 @Composable
-fun HeroPanel(station: RadioStation, modifier: Modifier = Modifier) {
+fun HeroPanel(
+    station: RadioStation,
+    status: PlayerStatus,
+    modifier: Modifier = Modifier
+) {
     val brandColor = Color(station.brandColor)
 
     Box(
@@ -71,6 +81,8 @@ fun HeroPanel(station: RadioStation, modifier: Modifier = Modifier) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                Spacer(Modifier.height(12.dp))
+                StatusLine(status)
             }
             Image(
                 painter = painterResource(station.iconResId),
@@ -83,4 +95,54 @@ fun HeroPanel(station: RadioStation, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@Composable
+private fun StatusLine(status: PlayerStatus) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        if (status == PlayerStatus.PLAYING) {
+            EqualizerBars()
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(
+            text = stringResource(status.textRes()),
+            modifier = Modifier.testTag("hero-status"),
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White.copy(alpha = 0.82f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** Three static bars: the design's "live" mark. Static so the layout never moves. */
+@Composable
+private fun EqualizerBars() {
+    Row(
+        modifier = Modifier.testTag("hero-equalizer"),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        listOf(10.dp, 18.dp, 7.dp).forEach { barHeight ->
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(barHeight)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White.copy(alpha = 0.85f))
+            )
+        }
+    }
+}
+
+@StringRes
+private fun PlayerStatus.textRes(): Int = when (this) {
+    PlayerStatus.CONNECTING -> R.string.status_connecting
+    PlayerStatus.PLAYING -> R.string.status_playing
+    PlayerStatus.RECONNECTING -> R.string.status_reconnecting
+    PlayerStatus.NO_CONNECTION -> R.string.status_no_connection
+    PlayerStatus.PAUSED -> R.string.status_paused
 }

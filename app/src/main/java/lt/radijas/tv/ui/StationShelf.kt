@@ -57,10 +57,14 @@ fun StationShelf(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(stations, key = { station -> station.id }) { station ->
+            // Kept stable per tile: an inline lambda would be a new object on every
+            // recomposition (and there is now one per status tick), which would make every
+            // tile recompose and lose its focus state.
+            val select = remember(station, onSelect) { { onSelect(station) } }
             StationTile(
                 station = station,
                 focusRequester = focusRequesters.getValue(station.id),
-                onSelect = { onSelect(station) }
+                onSelect = select
             )
         }
     }

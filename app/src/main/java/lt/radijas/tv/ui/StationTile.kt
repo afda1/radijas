@@ -41,7 +41,7 @@ import lt.radijas.tv.data.model.RadioStation
 
 /**
  * One station in the shelf. This is the only focusable element on the screen: the white ring
- * doubles as the "selected by D-pad" indicator until Task 5 wires OK to playback.
+ * marks where the D-pad is, and OK on it selects the station.
  */
 @Composable
 fun StationTile(
@@ -61,7 +61,10 @@ fun StationTile(
             }
             .focusable()
             .onKeyEvent { event ->
+                // Only the first KeyDown: a held OK repeats KeyDown and must not queue a
+                // second start/retry behind the first one.
                 if (event.type == KeyEventType.KeyDown &&
+                    event.nativeKeyEvent.repeatCount == 0 &&
                     (event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter)
                 ) {
                     onSelect()

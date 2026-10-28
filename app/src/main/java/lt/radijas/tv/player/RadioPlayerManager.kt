@@ -30,6 +30,13 @@ class RadioPlayerManager(private val context: Context) {
     private val _currentMediaId = MutableStateFlow<String?>(null)
     val currentMediaId: StateFlow<String?> = _currentMediaId.asStateFlow()
 
+    /**
+     * Whether the player intends to play. [playerState] alone cannot tell "paused because the
+     * user/system wanted silence" from "paused while still trying to play".
+     */
+    private val _playWhenReady = MutableStateFlow(false)
+    val playWhenReady: StateFlow<Boolean> = _playWhenReady.asStateFlow()
+
     private var currentStation: RadioStation? = null
     private var pendingStation: RadioStation? = null
 
@@ -41,6 +48,7 @@ class RadioPlayerManager(private val context: Context) {
         override fun onEvents(player: Player, events: Player.Events) {
             _playerState.value = deriveState(player)
             _currentMediaId.value = player.currentMediaItem?.mediaId
+            _playWhenReady.value = player.playWhenReady
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -72,6 +80,7 @@ class RadioPlayerManager(private val context: Context) {
                 } else {
                     _playerState.value = deriveState(c)
                     _currentMediaId.value = c.currentMediaItem?.mediaId
+                    _playWhenReady.value = c.playWhenReady
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to connect to FogwavePlaybackService", e)
@@ -108,6 +117,7 @@ class RadioPlayerManager(private val context: Context) {
     fun playStation(station: RadioStation) {
         Log.d(TAG, "Station requested: ${station.id}")
         currentStation = station
+        _playWhenReady.value = true
         val c = controller
         if (c == null) {
             pendingStation = station
@@ -140,6 +150,24 @@ class RadioPlayerManager(private val context: Context) {
         }
     }
 
+    /**
+     * Re-opens the current station from scratch: this is what OK does while the hero says the
+     * stream is not reachable.
+     *
+     * It deliberately goes through [playStation] instead of [play] - resuming a stream whose
+     * connection died would only replay a stale buffer, and a fresh media item is also what
+     * resets the service's reconnect backoff.
+     */
+    fun retry() {
+        val station = currentStation
+        if (station == null) {
+            Log.d(TAG, "Retry ignored - no station selected yet")
+            return
+        }
+        Log.d(TAG, "Retry requested: ${station.id}")
+        playStation(station)
+    }
+
     fun pause() {
         controller?.pause()
     }
@@ -153,6 +181,7 @@ class RadioPlayerManager(private val context: Context) {
         controller?.stop()
         controller?.clearMediaItems()
         _playerState.value = PlayerState.Idle
+        _playWhenReady.value = false
         _currentMediaId.value = null
     }
 
@@ -166,6 +195,7 @@ class RadioPlayerManager(private val context: Context) {
     fun release() {
         released = true
         pendingStation = null
+        _playWhenReady.value = false
         controller?.removeListener(playerListener)
         controller = null
         controllerFuture?.let { MediaController.releaseFuture(it) }

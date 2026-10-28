@@ -16,12 +16,12 @@ import lt.radijas.tv.ui.theme.RadijasBackground
 /**
  * The TV home screen: hero on top, focusable station shelf below.
  *
- * Task 5 will add `status` and `trackTitle` parameters; for now the screen is layout and focus
- * only, so OK on a tile is forwarded to [onSelect] but does not yet change playback.
+ * The screen is a pure function of [uiState]; playback decisions belong to the caller via
+ * [onSelect], so this composable stays previewable and testable.
  */
 @Composable
 fun NowPlayingScreen(
-    station: RadioStation,
+    uiState: NowPlayingUiState,
     stations: List<RadioStation>,
     onSelect: (RadioStation) -> Unit
 ) {
@@ -32,7 +32,8 @@ fun NowPlayingScreen(
             .padding(vertical = 27.dp)
     ) {
         HeroPanel(
-            station = station,
+            station = uiState.station,
+            status = uiState.status,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -41,7 +42,7 @@ fun NowPlayingScreen(
         Spacer(Modifier.height(20.dp))
         StationShelf(
             stations = stations,
-            playingId = station.id,
+            playingId = uiState.station.id,
             onSelect = onSelect,
             modifier = Modifier.fillMaxWidth()
         )
