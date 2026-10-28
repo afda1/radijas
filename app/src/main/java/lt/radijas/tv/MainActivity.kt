@@ -60,10 +60,15 @@ class MainActivity : ComponentActivity() {
                 val latestStatus = rememberUpdatedState(status)
                 val onSelect = remember(playerManager) {
                     { selected: RadioStation ->
-                        when (latestStatus.value) {
-                            // The stream is already dead and the retry loop is the thing to kick.
-                            PlayerStatus.NO_CONNECTION, PlayerStatus.PAUSED -> playerManager.retry()
-                            else -> selectStation(selected)
+                        val failing = latestStatus.value == PlayerStatus.NO_CONNECTION ||
+                            latestStatus.value == PlayerStatus.PAUSED
+                        // Only the tile that is failing retries (spec 6.2: OK "ant tos pačios
+                        // plytelės"); any other tile switches, even in the middle of an outage.
+                        if (failing && selected.id == currentStation?.id) {
+                            restartSilenceClock()
+                            playerManager.retry()
+                        } else {
+                            selectStation(selected)
                         }
                     }
                 }
@@ -80,9 +85,22 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun selectStation(station: RadioStation) {
+        restartSilenceClock()
         currentStation = station
         repository.setLastStationId(station.id)
         playerManager.playStation(station)
+    }
+
+    /**
+     * A new attempt gets its own 30 s of "trying".
+     *
+     * Without this, OK on a dead station (or a switch to another one) would leave the failure
+     * copy on screen, because the previous outage's silence is still counted, and the press
+     * would look like it did nothing.
+     */
+    private fun restartSilenceClock() {
+        silentSinceMs = SystemClock.elapsedRealtime()
+        silentForMs = 0L
     }
 
     /**

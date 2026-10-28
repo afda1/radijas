@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -103,16 +104,19 @@ private fun StatusLine(status: PlayerStatus) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        if (status == PlayerStatus.PLAYING) {
-            EqualizerBars()
-            Spacer(Modifier.width(10.dp))
-        }
+        // Composed in every state and only faded out: a conditional bar block would start the
+        // copy 28 dp further right in PLAYING and make the text jump between states.
+        EqualizerBars(active = status == PlayerStatus.PLAYING)
+        Spacer(Modifier.width(10.dp))
+        // One line, always: the longest copy (~38 characters at 16sp) is a small fraction of
+        // the hero's ~1500dp text column, so wrapping is impossible and the line height - and
+        // with it the station name above - cannot move between states.
         Text(
             text = stringResource(status.textRes()),
             modifier = Modifier.testTag("hero-status"),
             style = MaterialTheme.typography.titleMedium,
             color = Color.White.copy(alpha = 0.82f),
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -120,9 +124,11 @@ private fun StatusLine(status: PlayerStatus) {
 
 /** Three static bars: the design's "live" mark. Static so the layout never moves. */
 @Composable
-private fun EqualizerBars() {
+private fun EqualizerBars(active: Boolean) {
     Row(
-        modifier = Modifier.testTag("hero-equalizer"),
+        modifier = Modifier
+            .alpha(if (active) 1f else 0f)
+            .testTag("hero-equalizer"),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
