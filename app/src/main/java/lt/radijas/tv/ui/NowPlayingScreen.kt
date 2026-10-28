@@ -34,6 +34,7 @@ fun NowPlayingScreen(
         HeroPanel(
             station = uiState.station,
             status = uiState.status,
+            trackTitle = uiState.trackTitle,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

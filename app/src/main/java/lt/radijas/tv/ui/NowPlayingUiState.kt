@@ -6,8 +6,8 @@ import lt.radijas.tv.data.model.RadioStation
 /**
  * Everything the now-playing screen needs in one value.
  *
- * [trackTitle] is carried from the stream metadata; it stays null until metadata is plumbed
- * through, and the hero simply omits the line.
+ * [trackTitle] is the station's own ICY `StreamTitle`, already trimmed and validated by
+ * `parseTrackTitle`; null means the hero shows its empty fixed-height line.
  */
 @Immutable
 data class NowPlayingUiState(

@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
             RadijasTheme {
                 val playerState by playerManager.playerState.collectAsStateWithLifecycle()
                 val playWhenReady by playerManager.playWhenReady.collectAsStateWithLifecycle()
+                val trackTitle by playerManager.trackTitle.collectAsStateWithLifecycle()
 
                 LaunchedEffect(playerState) { trackSilence(playerState) }
 
@@ -75,7 +76,11 @@ class MainActivity : ComponentActivity() {
 
                 currentStation?.let { selectedStation ->
                     NowPlayingScreen(
-                        uiState = NowPlayingUiState(station = selectedStation, status = status),
+                        uiState = NowPlayingUiState(
+                            station = selectedStation,
+                            status = status,
+                            trackTitle = trackTitle
+                        ),
                         stations = repository.stations,
                         onSelect = onSelect
                     )

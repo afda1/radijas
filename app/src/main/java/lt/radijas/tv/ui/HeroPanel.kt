@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.R
@@ -40,12 +41,14 @@ import lt.radijas.tv.data.model.RadioStation
  * screen's only focus zone, so the D-pad can never strand focus on the hero.
  *
  * The status line is the honest part: it says what the player is actually doing, including the
- * states where nothing is audible.
+ * states where nothing is audible. The track-title line above it is the station's own metadata,
+ * shown in a fixed-height block so its arrival never reflows the hero.
  */
 @Composable
 fun HeroPanel(
     station: RadioStation,
     status: PlayerStatus,
+    trackTitle: String? = null,
     modifier: Modifier = Modifier
 ) {
     val brandColor = Color(station.brandColor)
@@ -82,7 +85,9 @@ fun HeroPanel(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(4.dp))
+                TrackTitleLine(trackTitle)
+                Spacer(Modifier.height(4.dp))
                 StatusLine(status)
             }
             Image(
@@ -95,6 +100,25 @@ fun HeroPanel(
                     .background(Color.Black.copy(alpha = 0.18f))
             )
         }
+    }
+}
+
+@Composable
+private fun TrackTitleLine(trackTitle: String?) {
+    // A fixed-height block that is composed in both cases: the empty state reserves exactly the
+    // same 48 dp, so the station name and status line never move when a title arrives.
+    Box(
+        modifier = Modifier.height(48.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = trackTitle.orEmpty(),
+            modifier = Modifier.testTag("hero-track-title"),
+            fontSize = 26.sp,
+            color = Color.White.copy(alpha = 0.66f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

@@ -13,6 +13,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -20,6 +21,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
@@ -171,6 +173,25 @@ class FogwavePlaybackService : MediaLibraryService() {
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             Log.d(TAG, if (isPlaying) "Playing" else "Not playing (paused/buffering/stopped)")
+        }
+
+        /**
+         * ICY is decoded by the default `MetadataRenderer`; `IcyInfo.title` is the raw
+         * `StreamTitle`. The title is published for the hero here because a `MediaSession`
+         * never forwards metadata events to controllers (see [TrackTitleState]).
+         */
+        override fun onMetadata(metadata: Metadata) {
+            val icy = metadata.getFirstEntryOfType(IcyInfo::class.java) ?: return
+            Log.d(TAG, "ICY metadata: title=${icy.title}")
+            TrackTitleState.update(icy.title)
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            // Every new stream starts with no song, whichever controller changed the item:
+            // carrying the previous title over would show a wrong song while it connects.
+            if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) {
+                TrackTitleState.clear()
+            }
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {

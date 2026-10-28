@@ -31,6 +31,13 @@ class RadioPlayerManager(private val context: Context) {
     val currentMediaId: StateFlow<String?> = _currentMediaId.asStateFlow()
 
     /**
+     * The station's own ICY `StreamTitle` ("kas groja"). Null while nothing is known: before the
+     * first metadata block arrives, after a stop, and immediately after a station switch, so a
+     * previous station's song can never be shown against the new one.
+     */
+    val trackTitle: StateFlow<String?> = TrackTitleState.title
+
+    /**
      * Whether the player intends to play. [playerState] alone cannot tell "paused because the
      * user/system wanted silence" from "paused while still trying to play".
      */
@@ -117,6 +124,9 @@ class RadioPlayerManager(private val context: Context) {
     fun playStation(station: RadioStation) {
         Log.d(TAG, "Station requested: ${station.id}")
         currentStation = station
+        // Cleared synchronously, before any player call: the hero must drop the previous
+        // station's song the moment the user switches, not when the new stream finally talks.
+        TrackTitleState.clear()
         _playWhenReady.value = true
         val c = controller
         if (c == null) {
@@ -183,6 +193,7 @@ class RadioPlayerManager(private val context: Context) {
         _playerState.value = PlayerState.Idle
         _playWhenReady.value = false
         _currentMediaId.value = null
+        TrackTitleState.clear()
     }
 
     fun togglePlay() {
