@@ -676,10 +676,13 @@ git commit -m "feat: show ICY track title in hero"
 @Test fun `full amount returns brand color`() =
     assertEquals(Color(0xFF0E8FD1), tonalSurface(0xFF0E8FD1, 1f))
 
-@Test fun `mix is between the two`() {
+@Test fun `mix is between the two endpoints in every channel`() {
+    val base = Color(0xFF141218)
+    val brand = Color(0xFF0E8FD1)
     val mixed = tonalSurface(0xFF0E8FD1, 0.5f)
-    assertTrue(mixed.red in 0.05f..0.12f)
-    assertTrue(mixed.blue in 0.6f..0.9f)
+    assertTrue(mixed.red > base.red && mixed.red < brand.red)
+    assertTrue(mixed.green > base.green && mixed.green < brand.green)
+    assertTrue(mixed.blue > base.blue && mixed.blue < brand.blue)
 }
 
 @Test fun `every station brand has readable text`() {
