@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
@@ -49,7 +50,6 @@ import lt.radijas.tv.ui.theme.HeroCoreX
 import lt.radijas.tv.ui.theme.HeroCoreY
 import lt.radijas.tv.ui.theme.HeroGlowRadiusX
 import lt.radijas.tv.ui.theme.HeroGlowRadiusY
-import lt.radijas.tv.ui.theme.LogoPlate
 import lt.radijas.tv.ui.theme.RadijasContent
 import lt.radijas.tv.ui.theme.heroGlowStops
 
@@ -110,15 +110,11 @@ fun HeroPanel(
                 painter = painterResource(station.iconResId),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                // No dark scrim: the glow behind the icon is its backdrop, and a dark rounded
-                // plate over it read as a rendering artefact. Artwork that is itself near-black
-                // gets the same light plate and 12 dp inner margin as its shelf tile, so the
-                // framed mark reads the same in both places.
-                modifier = Modifier
-                    .size(168.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (station.logoOnLightPlate) LogoPlate else Color.Transparent)
-                    .padding(if (station.logoOnLightPlate) 12.dp else 0.dp)
+                // The logo is already a white silhouette on transparency and the brand lives in
+                // the glow behind it, so the mark needs no plate: the glow is its backdrop and
+                // the tile's brand colour is the only accent.
+                colorFilter = ColorFilter.tint(Color.White),
+                modifier = Modifier.size(168.dp)
             )
         }
     }

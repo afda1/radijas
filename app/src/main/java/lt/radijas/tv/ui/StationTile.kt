@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -40,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.data.model.RadioStation
-import lt.radijas.tv.ui.theme.LogoPlate
 import lt.radijas.tv.ui.theme.RadijasContent
 import lt.radijas.tv.ui.theme.onBrand
 import lt.radijas.tv.ui.theme.tonalSurface
@@ -113,21 +113,18 @@ fun StationTile(
             modifier = Modifier
                 .size(156.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(
-                    if (station.logoOnLightPlate) LogoPlate else Color.Black.copy(alpha = 0.25f)
-                ),
+                .background(Color.Black.copy(alpha = 0.25f)),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(station.iconResId),
                 contentDescription = null,
-                // Dark artwork sits fitted inside a light plate with a 12 dp margin, so the mark
-                // is never cropped and never touches the plate edge. Light artwork keeps the
-                // dark scrim and fills the square, as before.
-                contentScale = if (station.logoOnLightPlate) ContentScale.Fit else ContentScale.Crop,
-                modifier = Modifier
-                    .size(156.dp)
-                    .padding(if (station.logoOnLightPlate) 12.dp else 0.dp)
+                // Every station asset is a white silhouette on transparency, already trimmed to
+                // its mark with a 6 % breathing margin, so Fit fills the square without cropping
+                // a wide mark and the brand only ever comes from the surface around it.
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(Color.White),
+                modifier = Modifier.size(156.dp)
             )
         }
         Spacer(Modifier.height(10.dp))
