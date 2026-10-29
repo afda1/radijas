@@ -22,8 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -40,9 +44,12 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.R
 import lt.radijas.tv.data.model.RadioStation
-import lt.radijas.tv.ui.theme.RadijasBackground
+import lt.radijas.tv.ui.theme.HeroCoreX
+import lt.radijas.tv.ui.theme.HeroCoreY
+import lt.radijas.tv.ui.theme.HeroGlowRadiusX
+import lt.radijas.tv.ui.theme.HeroGlowRadiusY
 import lt.radijas.tv.ui.theme.RadijasContent
-import lt.radijas.tv.ui.theme.tonalSurface
+import lt.radijas.tv.ui.theme.heroGlowStops
 
 /**
  * Display-only "now playing" hero.
@@ -61,21 +68,20 @@ fun HeroPanel(
     trackTitle: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val brandColor = station.brandColor
+    // Remembered, not rebuilt: the hero recomposes on every status and track tick, and a new
+    // Brush each time would throw away the shader. drawWithCache then builds the brush once per
+    // size, and only when the station changes.
+    val heroBackground = remember(brandColor) { heroGlowBackground(brandColor) }
+
     Box(
         modifier = modifier
             .testTag("hero-panel")
             .clip(RoundedCornerShape(28.dp))
-            // The hero is a tinted version of the page, never a flat brand slab: the brand
-            // survives at 55 % in the middle and dissolves into the page colour at the edges,
-            // so the same layout works for a pale yellow and a deep red brand alike.
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        tonalSurface(station.brandColor, 0.55f),
-                        RadijasBackground
-                    )
-                )
-            )
+            // The hero is a tinted version of the page, never a flat brand slab: a radial glow
+            // whose core sits under the station icon, fading into the page colour before it
+            // reaches the text column (see heroSurface).
+            .then(heroBackground)
             // 20 dp, not 28: the 96 sp name plus the fixed 26 sp track block and the status
             // line only just fit the hero at 1080p (a 540 dp-tall canvas), and the later
             // children of a Column are the ones a short hero would squeeze to nothing.
@@ -102,11 +108,42 @@ fun HeroPanel(
                 painter = painterResource(station.iconResId),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
+                // No scrim plate: the glow behind the icon is its backdrop now, and a dark
+                // rounded plate over it read as a rendering artefact. It also made the black
+                // station logos harder to see, not easier.
                 modifier = Modifier
                     .size(168.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color.Black.copy(alpha = 0.18f))
             )
+        }
+    }
+}
+
+/**
+ * Paints [heroSurface] behind the hero.
+ *
+ * The brush is a unit circle drawn through a translate + scale, which turns it into the ellipse
+ * [HeroGlowRadiusX]/[HeroGlowRadiusY] describe; that keeps the drawn pixels identical to the
+ * fraction-space model the contrast test samples. The brush is built inside `drawWithCache`,
+ * i.e. once per size and brand, not per recomposition.
+ */
+private fun heroGlowBackground(brand: Long): Modifier = Modifier.drawWithCache {
+    val width = size.width
+    val height = size.height
+    val glow = Brush.radialGradient(
+        *heroGlowStops(brand),
+        center = Offset.Zero,
+        radius = 1f
+    )
+    onDrawBehind {
+        translate(left = HeroCoreX * width, top = HeroCoreY * height) {
+            scale(
+                scaleX = HeroGlowRadiusX * width,
+                scaleY = HeroGlowRadiusY * height,
+                pivot = Offset.Zero
+            ) {
+                drawRect(brush = glow, topLeft = Offset(-1f, -1f), size = Size(2f, 2f))
+            }
         }
     }
 }

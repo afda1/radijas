@@ -56,6 +56,15 @@ fun StationTile(
     onSelect: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    // Derived colours are remembered: the shelf recomposes on every status tick, and each
+    // tonalSurface/onBrand call is a real computation, not a field read.
+    val background = remember(station.brandColor, isFocused) {
+        tonalSurface(station.brandColor, if (isFocused) 0.34f else 0.15f)
+    }
+    val accent = remember(station.brandColor) { onBrand(station.brandColor) }
+    val labelColor = remember(station.brandColor, isFocused) {
+        if (isFocused) accent else RadijasContent.copy(alpha = 0.72f)
+    }
 
     Column(
         modifier = modifier
@@ -79,24 +88,21 @@ fun StationTile(
                 }
             }
             .testTag("station-tile-${station.id}")
-            // The focused tile grows 5 % from its centre, exactly as the design asks. No
+            // The focused tile grows 6 % from its centre, exactly as the design asks. No
             // animation: focus is still the only thing on screen that moves, and it moves
             // immediately, never as a delayed flourish.
             .graphicsLayer {
-                val scale = if (isFocused) 1.05f else 1f
+                val scale = if (isFocused) 1.06f else 1f
                 scaleX = scale
                 scaleY = scale
             }
             .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (isFocused) tonalSurface(station.brandColor, 0.34f)
-                else tonalSurface(station.brandColor, 0.15f)
-            )
+            .background(background)
             .border(
                 width = 3.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused
                 // surface: a white ring would be the plainest thing on a screen about colour.
-                color = if (isFocused) onBrand(station.brandColor) else Color.Transparent,
+                color = if (isFocused) accent else Color.Transparent,
                 shape = RoundedCornerShape(20.dp)
             )
             .padding(10.dp),
@@ -124,11 +130,7 @@ fun StationTile(
                 lineHeight = 22.sp
             ),
             fontWeight = if (isFocused) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isFocused) {
-                onBrand(station.brandColor)
-            } else {
-                RadijasContent.copy(alpha = 0.72f)
-            },
+            color = labelColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
