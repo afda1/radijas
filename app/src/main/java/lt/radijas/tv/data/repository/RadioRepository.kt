@@ -37,7 +37,9 @@ class RadioRepository(context: Context) {
             name = "Rock FM",
             streamUrl = "https://stream4.radijas.lt/rockfm",
             iconResId = R.drawable.ic_station_rockfm,
-            brandColor = 0xFFD72828L
+            brandColor = 0xFFD72828L,
+            // Mean luminance of the artwork's opaque pixels is 27/255: near-black on a dark tile.
+            logoOnLightPlate = true
         ),
         RadioStation(
             id = "relax",
@@ -51,7 +53,9 @@ class RadioRepository(context: Context) {
             name = "Lietus",
             streamUrl = "https://stream.m-1.fm/lietus/aacp64",
             iconResId = R.drawable.ic_station_lietus,
-            brandColor = 0xFF009A61L
+            brandColor = 0xFF009A61L,
+            // Mean luminance of the artwork's opaque pixels is 44/255: near-black on a dark tile.
+            logoOnLightPlate = true
         ),
         RadioStation(
             id = "m1",
@@ -65,7 +69,9 @@ class RadioRepository(context: Context) {
             name = "M-1 Plius",
             streamUrl = "https://radio.m-1.fm/m1plius/aacp64",
             iconResId = R.drawable.ic_station_m1plus,
-            brandColor = 0xFFC92636L
+            brandColor = 0xFFC92636L,
+            // Mean luminance of the artwork's opaque pixels is 0.2/255: black on a dark tile.
+            logoOnLightPlate = true
         ),
         RadioStation(
             id = "goldfm",
@@ -79,7 +85,9 @@ class RadioRepository(context: Context) {
             name = "Radiocentras",
             streamUrl = "https://stream1.rc.lt/rc128.mp3",
             iconResId = R.drawable.ic_station_rc,
-            brandColor = 0xFFF05A28L
+            brandColor = 0xFFF05A28L,
+            // Mean luminance of the artwork's opaque pixels is 1.5/255: black on a dark tile.
+            logoOnLightPlate = true
         )
     )
 

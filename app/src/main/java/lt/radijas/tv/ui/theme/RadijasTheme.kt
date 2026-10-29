@@ -15,6 +15,12 @@ val RadijasBackground = Color(0xFF141218)
 /** Primary text colour from the design spec. */
 val RadijasContent = Color(0xFFF2EDF2)
 
+/**
+ * Plate behind logo artwork that is too dark for the brand-tinted surface. Shared by the shelf
+ * tile and the hero so both read as the same framed station mark.
+ */
+val LogoPlate = Color(0xFFF2EFF4)
+
 /** Minimum WCAG 2.1 contrast ratio for text drawn on a tonal surface. */
 private const val MinTextContrast = 4.5f
 

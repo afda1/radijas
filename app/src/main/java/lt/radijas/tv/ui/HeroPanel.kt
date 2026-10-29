@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
@@ -48,6 +49,7 @@ import lt.radijas.tv.ui.theme.HeroCoreX
 import lt.radijas.tv.ui.theme.HeroCoreY
 import lt.radijas.tv.ui.theme.HeroGlowRadiusX
 import lt.radijas.tv.ui.theme.HeroGlowRadiusY
+import lt.radijas.tv.ui.theme.LogoPlate
 import lt.radijas.tv.ui.theme.RadijasContent
 import lt.radijas.tv.ui.theme.heroGlowStops
 
@@ -108,12 +110,15 @@ fun HeroPanel(
                 painter = painterResource(station.iconResId),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                // No scrim plate: the glow behind the icon is its backdrop now, and a dark
-                // rounded plate over it read as a rendering artefact. It also made the black
-                // station logos harder to see, not easier.
+                // No dark scrim: the glow behind the icon is its backdrop, and a dark rounded
+                // plate over it read as a rendering artefact. Artwork that is itself near-black
+                // gets the same light plate and 12 dp inner margin as its shelf tile, so the
+                // framed mark reads the same in both places.
                 modifier = Modifier
                     .size(168.dp)
                     .clip(RoundedCornerShape(24.dp))
+                    .background(if (station.logoOnLightPlate) LogoPlate else Color.Transparent)
+                    .padding(if (station.logoOnLightPlate) 12.dp else 0.dp)
             )
         }
     }

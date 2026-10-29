@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.data.model.RadioStation
+import lt.radijas.tv.ui.theme.LogoPlate
 import lt.radijas.tv.ui.theme.RadijasContent
 import lt.radijas.tv.ui.theme.onBrand
 import lt.radijas.tv.ui.theme.tonalSurface
@@ -112,14 +113,21 @@ fun StationTile(
             modifier = Modifier
                 .size(156.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color.Black.copy(alpha = 0.25f)),
+                .background(
+                    if (station.logoOnLightPlate) LogoPlate else Color.Black.copy(alpha = 0.25f)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(station.iconResId),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(156.dp)
+                // Dark artwork sits fitted inside a light plate with a 12 dp margin, so the mark
+                // is never cropped and never touches the plate edge. Light artwork keeps the
+                // dark scrim and fills the square, as before.
+                contentScale = if (station.logoOnLightPlate) ContentScale.Fit else ContentScale.Crop,
+                modifier = Modifier
+                    .size(156.dp)
+                    .padding(if (station.logoOnLightPlate) 12.dp else 0.dp)
             )
         }
         Spacer(Modifier.height(10.dp))
