@@ -77,43 +77,11 @@ class FogwavePlaybackService : MediaLibraryService() {
         .setPrioritizeTimeOverSizeThresholds(true)
         .build()
 
-    private val librarySessionCallback = object : MediaLibrarySession.Callback {
-        /**
-         * The design has no pause control anywhere. Every controller that is not this app's own
-         * `MediaController` is handed a read-only command set at connection time, so play/pause,
-         * prepare, seeking and replacing the item are never advertised to it - neither through
-         * Media3's controller API (Assistant, other apps) nor, because Media3 copies the
-         * notification controller's command set into the platform session, through the system
-         * media controls or the media button receiver.
-         *
-         * `session.isMediaNotificationController` singles out the notification's own internal
-         * controller, which connects from this package but only renders the notification.
-         */
-        override fun onConnect(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo
-        ): MediaSession.ConnectionResult {
-            val isNotificationController = session.isMediaNotificationController(controller)
-            val fullControl = SessionCommandPolicy.allowsFullControl(
-                controllerPackage = controller.packageName,
-                appPackage = packageName,
-                isNotificationController = isNotificationController
-            )
-            if (fullControl) {
-                // Default session + library commands and every player command: our own
-                // MediaController still has to prepare, play, set items and stop.
-                return MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
-            }
-            Log.d(
-                TAG,
-                "Restricted controller ${controller.packageName} (notification=$isNotificationController)"
-            )
-            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
-                .setAvailablePlayerCommands(SessionCommandPolicy.externalControllerCommands())
-                .build()
-        }
-
+    // Library/browse behaviour only; the connection-level command policy is applied by
+    // RestrictedConnectionCallback, which wraps this callback (see SessionCommandPolicy.kt).
+    // Every override added here must also be forwarded there - Kotlin's interface delegation does
+    // not forward Java default methods, so an un-forwarded override silently falls back to empty.
+    private val libraryCallback = object : MediaLibrarySession.Callback {
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -376,7 +344,13 @@ class FogwavePlaybackService : MediaLibraryService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        mediaLibrarySession = MediaLibrarySession.Builder(this, player, librarySessionCallback)
+        // Built here, not as a field: the callback needs `packageName`, and property initializers
+        // run in the service constructor before the context is attached.
+        mediaLibrarySession = MediaLibrarySession.Builder(
+            this,
+            player,
+            RestrictedConnectionCallback(packageName, libraryCallback)
+        )
             .setSessionActivity(sessionActivity)
             .build()
     }
@@ -405,11 +379,11 @@ class FogwavePlaybackService : MediaLibraryService() {
         retryAttempt = 0
         player.playWhenReady = false
         player.stop()
+        // Nothing stays queued: with an empty timeline Media3 also retires the notification
+        // instead of leaving an idle „playing" card behind while the app is still bound.
+        player.clearMediaItems()
+        lastRequestedItem = null
         TrackTitleState.clear()
-        // `stopSelf()` alone cannot end the service while the app's own MediaController still
-        // binds it, so remove the notification explicitly: after „Stabdyti" nothing must keep
-        // looking like it is playing.
-        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

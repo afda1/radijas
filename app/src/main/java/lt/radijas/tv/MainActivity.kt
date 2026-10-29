@@ -145,6 +145,10 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // Tapping the playback notification only brings the app forward. The stream is already
+        // playing (the notification exists because of it), so replaying the last station would
+        // audibly restart and rebuffer it - and blank the now-playing line.
+        if (intent.getBooleanExtra(EXTRA_FROM_NOTIFICATION, false)) return
         // Launching from the TV launcher while the activity is still alive arrives here
         // (launchMode="singleTop"), so play the last station again after Home stopped it.
         val station = StartupStation.resolve(repository)
@@ -169,7 +173,14 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    private companion object {
-        const val SILENCE_TICK_MS = 1_000L
+    companion object {
+        private const val SILENCE_TICK_MS = 1_000L
+
+        /**
+         * Set only on the playback notification's content intent. Without it, a live activity
+         * cannot tell "the user tapped the notification" from "the launcher (re)started us" - and
+         * the latter is the only case where replaying the last station is wanted.
+         */
+        const val EXTRA_FROM_NOTIFICATION = "lt.radijas.tv.extra.FROM_NOTIFICATION"
     }
 }

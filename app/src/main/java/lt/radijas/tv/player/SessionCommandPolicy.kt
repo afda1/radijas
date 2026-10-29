@@ -1,6 +1,14 @@
 package lt.radijas.tv.player
 
+import android.util.Log
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaLibraryService.MediaLibrarySession
+import androidx.media3.session.MediaSession
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * Decides what a connected controller may ask the player to do.
@@ -9,10 +17,9 @@ import androidx.media3.common.Player
  * system (Assistant, TV media surfaces, the media button receiver). Pausing is the one state the
  * user cannot explain from the screen, so no controller outside this app may reach it.
  *
- * The restriction is applied at connection time in
- * [FogwavePlaybackService.librarySessionCallback]'s `onConnect`, so a disallowed command is never
- * advertised to the controller in the first place - it is not rejected later, when the user has
- * already pressed something and waits for a result.
+ * The restriction is applied at connection time in [RestrictedConnectionCallback.onConnect], so a
+ * disallowed command is never advertised to the controller in the first place - it is not rejected
+ * later, when the user has already pressed something and waits for a result.
  */
 internal object SessionCommandPolicy {
 
@@ -44,4 +51,94 @@ internal object SessionCommandPolicy {
         Player.Commands.Builder()
             .addAllReadOnlyCommands()
             .build()
+}
+
+/**
+ * The callback the service installs: it forwards the library/browse behaviour untouched and
+ * answers every controller connection with the command set from [SessionCommandPolicy].
+ *
+ * It is a real class rather than a private override inside the service so a test can hand it the
+ * same `ControllerInfo` Media3 hands a real controller and assert the commands it would receive.
+ * `MediaSession.isMediaNotificationController` singles out the notification's own internal
+ * controller, which connects from this package but only renders the notification.
+ *
+ * The platform session only receives this command set when the notification controller connects, a
+ * moment after the service starts. A legacy play in that brief window can start nothing: the
+ * service starts with no media item, and an `ACTION_PLAY` / media button cannot set one (`play()`
+ * on an empty timeline is a no-op), so there is nothing to un-pause and no pause state to fall into.
+ */
+internal class RestrictedConnectionCallback(
+    private val appPackage: String,
+    private val delegate: MediaLibrarySession.Callback
+) : MediaLibrarySession.Callback {
+
+    override fun onConnect(
+        session: MediaSession,
+        controller: MediaSession.ControllerInfo
+    ): MediaSession.ConnectionResult {
+        val isNotificationController = session.isMediaNotificationController(controller)
+        val fullControl = SessionCommandPolicy.allowsFullControl(
+            controllerPackage = controller.packageName,
+            appPackage = appPackage,
+            isNotificationController = isNotificationController
+        )
+        if (fullControl) {
+            // Session + library commands and every player command: our own MediaController still
+            // has to prepare, play, set items and stop.
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
+                .setAvailableSessionCommands(
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS
+                )
+                .setAvailablePlayerCommands(Player.Commands.Builder().addAllCommands().build())
+                .build()
+        }
+        Log.d(
+            TAG,
+            "Restricted controller ${controller.packageName} (notification=$isNotificationController)"
+        )
+        return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
+            .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
+            .setAvailablePlayerCommands(SessionCommandPolicy.externalControllerCommands())
+            .build()
+    }
+
+    // Kotlin's `MediaLibrarySession.Callback by delegate` does not forward Java default methods -
+    // the generated class only overrides what is written here, and every library callback silently
+    // fell back to the (empty) interface defaults. So the methods the service's callback overrides
+    // are forwarded by hand; when one is added there, it has to be added here too.
+
+    override fun onGetLibraryRoot(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        params: LibraryParams?
+    ): ListenableFuture<LibraryResult<MediaItem>> =
+        delegate.onGetLibraryRoot(session, browser, params)
+
+    override fun onGetChildren(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        parentId: String,
+        page: Int,
+        pageSize: Int,
+        params: LibraryParams?
+    ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> =
+        delegate.onGetChildren(session, browser, parentId, page, pageSize, params)
+
+    override fun onGetItem(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        mediaId: String
+    ): ListenableFuture<LibraryResult<MediaItem>> =
+        delegate.onGetItem(session, browser, mediaId)
+
+    override fun onAddMediaItems(
+        mediaSession: MediaSession,
+        controller: MediaSession.ControllerInfo,
+        mediaItems: MutableList<MediaItem>
+    ): ListenableFuture<MutableList<MediaItem>> =
+        delegate.onAddMediaItems(mediaSession, controller, mediaItems)
+
+    private companion object {
+        const val TAG = "RestrictedConnectionCallback"
+    }
 }

@@ -120,7 +120,9 @@ class RadijasNotificationProvider(private val context: Context) : MediaNotificat
     private fun openAppIntent(): PendingIntent = PendingIntent.getActivity(
         context,
         REQUEST_OPEN_APP,
-        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .putExtra(MainActivity.EXTRA_FROM_NOTIFICATION, true),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
 
