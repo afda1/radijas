@@ -1,91 +1,90 @@
-<p align="center">
-  <img src="assets/icon-rounded.png" width="112" alt="Fogwave icon">
-</p>
+# Radijas
 
-<h1 align="center">Fogwave</h1>
+**Android TV radijo programėlė. Įjungi — groja.**
 
-<p align="center">
-  <b>A calm, open-source internet radio app for Android.</b><br>
-  Listen to Lithuania's favorite stations in one tap.
-</p>
+Vienas ekranas, dešimt Lietuvos stočių, jokio meniu. Skirta tiems, kuriems radijas televizoriuje turi įsijungti taip pat paprastai kaip televizijos kanalas.
 
-<p align="center">
-  <a href="https://github.com/kalarina-bit/Fogwave/releases/latest"><img src="https://img.shields.io/github/v/release/kalarina-bit/Fogwave?style=for-the-badge&label=release&labelColor=1b1b1b&color=2e7d32" alt="Latest release"></a>
-</p>
+<img src="docs/screenshots/01-lietus.png" alt="Lietus groja" width="100%">
 
-<p align="center">
-  <a href="https://f-droid.org/packages/cc.skysparkle.fogwave/"><img src="assets/get-it-on%20(1).png" height="56" alt="Get it on F-Droid"></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://git.skysparkle.cc/kalarina/Fogwave"><img src="assets/badge_obtainium.png" height="56" alt="Get it on Obtainium"></a>
-  <a href="https://github.com/kalarina-bit/Fogwave/releases/latest"><img src="assets/get-it-on-github.png" height="56" alt="Get it on GitHub"></a>
-  <a href="https://git.skysparkle.cc/kalarina/Fogwave/releases"><img src="assets/get-it-on-gitea.png" height="56" alt="Get it on Gitea"></a>
-</p>
+## Kas tai
 
-<p align="center">
-  <img src="assets/screenshots/5-feel-closer.png" width="160" alt="Feel closer to Lithuania">
-  <img src="assets/screenshots/4-stations.png" width="160" alt="Browse all stations">
-  <img src="assets/screenshots/1-find-station.png" width="160" alt="Find a station, then settle in">
-  <img src="assets/screenshots/2-your-style.png" width="160" alt="Just your style">
-  <img src="assets/screenshots/3-soundtrack.png" width="160" alt="Your soundtrack">
-</p>
+Programėlė atsidaro ir iškart groja paskutinę klausytą stotį — pirmą kartą paleidus, Lietus. Nereikia spausti „play", nereikia rinktis profilio, nereikia nieko nustatyti.
 
-> [!TIP]
-> If you find Fogwave useful, please consider giving it a ⭐ — it helps others discover the project.
+Valdymas telpa į keturis pulto mygtukus:
 
-## ✨ Features
+| Mygtukas | Veiksmas |
+|---|---|
+| ← → | Rinktis stotį |
+| OK | Groti |
+| Back / Home | Išeiti ir nutildyti |
+| ↑ ↓ | Nieko |
 
-- 📻 **10 Lithuanian stations** — ZIP FM, Power Hit Radio, Rock FM, Relax FM, M-1, Gold FM and more
-- 🎧 **Background playback** with lock-screen, notification, headphone and Bluetooth controls
-- 🚗 **Android Auto** support
-- 🔄 **Auto-reconnect** when the stream drops or the network comes back
-- 🎚️ **Equalizer** with presets, loudness boost and dynamics processing
-- ❤️ **Favorites, recently played and similar stations** matched by genre
-- 🗂️ **Four layouts** — list, table, tiles or icons, with adjustable size
-- 🌙 **Dark theme**
-- 🌍 **Six languages** — English, Russian, German, Japanese, Lithuanian and Chinese
-- 🔓 **No ads, no tracking, no accounts**
+Daugiau nieko nėra. Sąmoningai.
 
-## <img src="assets/icon-install.png" width="32" alt=""> Installation
+## Ekranai
 
-- **[F-Droid](https://f-droid.org/packages/cc.skysparkle.fogwave/)** — install and update through the F-Droid client.
-- **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://git.skysparkle.cc/kalarina/Fogwave)** — installs the APK straight from Gitea releases and keeps it up to date.
-- **Manually** — download the latest APK from [GitHub](https://github.com/kalarina-bit/Fogwave/releases/latest) or [Gitea](https://git.skysparkle.cc/kalarina/Fogwave/releases), allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps), then open the `.apk` and confirm.
+| | |
+|---|---|
+| <img src="docs/screenshots/01-lietus.png" width="420"> | <img src="docs/screenshots/02-rock-fm.png" width="420"> |
+| <img src="docs/screenshots/03-m1-plius.png" width="420"> | <img src="docs/screenshots/04-radiocentras.png" width="420"> |
 
-## <img src="assets/icon-verify.png" width="32" alt=""> Verifying a download
+Spalva ateina iš stoties ženklo: perjungi stotį — persidažo visas ekranas. Logotipai balti, kad būtų įskaitomi iš sofos bet kurioje spalvoje.
 
-Every official APK is signed with the same key. Check it before installing:
+## Savybės
 
-```sh
-apksigner verify --print-certs Fogwave-v<version>.apk
-```
+- **10 stočių:** ZIP FM, Power Hit Radio, Power Hit Radio Gold, Rock FM, Relax FM, Lietus, M-1, M-1 Plius, Gold FM, Radiocentras.
+- **Automatinis prisijungimas iš naujo.** Nutrūkus srautui, bandoma 1 → 2 → 4 → 8 → 15 s, po to kas 30 s, be galo. Naktį dingęs Wi-Fi atsigauna pats.
+- **„Kas groja"** — stoties siunčiamas atlikėjas ir daina, kai stotis jį siunčia.
+- **Jokių reklamų, analitikos, paskyrų, registracijų.** Vienintelis tinklo srautas — pati radijo stotis.
+- **TV-only.** Programėlė pasirodo tik televizoriaus meniu, telefono launcheryje jos nėra.
 
-The SHA-256 fingerprint of the signing certificate must be:
+### Ko sąmoningai nėra
 
-```
-1A:85:AF:5A:08:23:DE:D1:76:7C:07:55:41:FA:15:87:7F:6E:3B:99:9E:5E:52:CF:2B:C8:03:55:F6:63:12:7F
-```
+Nėra pauzės mygtuko. Nėra nustatymų ekrano. Nėra mėgstamų sąrašo, paieškos, ekvalaizerio, miego laikmačio. Nėra šviesios temos. Kiekvienas papildomas ekranas yra vieta, kurioje vyresnis žmogus gali pasimesti — todėl jų nėra.
 
-`apksigner` prints the same value in lowercase without colons. On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.fogwave`).
+## Įdiegimas
 
-## <img src="assets/icon-structure.png" width="32" alt=""> Building from source
+Šiuo metu APK dar nepublikuotas. Statai iš šaltinio:
 
-Requires JDK 17+ and Android SDK 37.
-
-```sh
+```bash
+git clone https://github.com/afda1/radijas.git
+cd radijas
+export JAVA_HOME=/kelias/iki/jdk-17      # JDK 17 ar naujesnis
+export ANDROID_HOME=/kelias/iki/android-sdk
 ./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Release builds are signed only when a keystore is supplied through the `KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` environment variables; otherwise the release build is unsigned, as F-Droid expects. Never commit keystores.
+Reikia Android SDK su `platforms;android-37`. Programėlė veikia nuo Android TV 7.0 (`minSdk 24`).
 
-### Releasing
+## Kaip tai veikia
 
-1. Bump `versionCode` and `versionName` in `app/build.gradle.kts`.
-2. Add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
-3. Tag the commit as `v<versionName>` (for example `v1.0.11`).
+Vienas Compose ekranas: nefokusuojama „dabar groja" panelė viršuje ir vienintelė fokusuojama zona — horizontali stočių lentyna apačioje. Fokusas negali „pabėgti" į kitą zoną, nes kitos zonos nėra.
 
-## 🤝 Contributing
+Garsą groja `MediaLibraryService` su ExoPlayer (Media3). Tyčia atsisakyta bet kokio play/pause valdymo — nei programėlėje, nei pranešime, nei per Google Assistant. Jei sistema galėtų tyliai įjungti pauzę, žmogus sėdėtų prie ekrano, kuris rašo „Gyvai", ir nieko negirdėtų.
 
-Bug reports, station suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Fogwave/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes. To open an issue or a pull request, [create an account](https://git.skysparkle.cc/user/sign_up) on this Gitea.
+Pranešime yra tik „Stabdyti". Išėjus į Home ar paspaudus Back, garsas nutyla; televizoriaus screensaveriui įsijungus — groja toliau, kad būtų galima užmigti klausant.
 
-## 📄 License
+## Apie dizainą
 
-[GNU General Public License v3.0 only](LICENSE).
+Spalvų paletė nėra fiksuota — ji apskaičiuojama iš kiekvienos stoties ženklo spalvos taip, kad tekstas visada atitiktų WCAG 4.5:1 kontrastą. Tai testuojama automatiškai visoms dešimčiai stočių, o ne tikrinama akimis.
+
+Fokuso rėmelis, saugi zona (5 % ekrano krašto), teksto dydžiai ir „nešokinėjantis" išdėstymas taip pat padengti testais: `app/src/test/` turi 60+ vienetų testų, įskaitant fokuso elgsenos, būsenų ir paletės kontrasto patikras.
+
+## Kreditai ir licencija
+
+**Radijas** platinamas pagal [GPL-3.0-only](LICENSE).
+
+Garso variklis — Media3/ExoPlayer sesijos servisas, automatinio prisijungimo logika, stočių katalogas — kilęs iš [Fogwave](https://github.com/kalarina-bit/Fogwave) (GPL-3.0-only, autorius kalarina-bit). Visa kita — televizoriaus interfeisas, dizaino sistema, fokuso modelis, logotipas ir testai — parašyta šiam projektui.
+
+Kadangi dalis kodo yra išvestinė, visa programėlė lieka GPL-3.0-only: jei platini pakeistą versiją, turi pateikti ir jos išeities kodą.
+
+---
+
+## English
+
+**Radijas** is an Android TV radio app for ten Lithuanian stations. It opens and plays — one screen, four remote buttons, no menus, no accounts, no ads, no analytics.
+
+The palette is derived from each station's brand colour and tested for WCAG 4.5:1 contrast. There is deliberately no pause control anywhere, so the app can never be left silently "playing".
+
+Built on the [Fogwave](https://github.com/kalarina-bit/Fogwave) playback engine (GPL-3.0-only); the TV interface, design system, focus model and tests are original. Licensed GPL-3.0-only.
