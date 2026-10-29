@@ -71,6 +71,16 @@ Spalvų paletė nėra fiksuota — ji apskaičiuojama iš kiekvienos stoties že
 
 Fokuso rėmelis, saugi zona (5 % ekrano krašto), teksto dydžiai ir „nešokinėjantis" išdėstymas taip pat padengti testais: `app/src/test/` turi 60+ vienetų testų, įskaitant fokuso elgsenos, būsenų ir paletės kontrasto patikras.
 
+## Kaip tai padaryta
+
+Projektas sukurtas dirbtinio intelekto pagalba, žmogui vadovaujant.
+
+- Kodą, testus ir dokumentaciją rašė **DeepSeek V4.1 Flash**, veikiantis per OpenCode agentą.
+- Produkto sprendimus priėmė žmogus (Paulius Zakšauskas): kam skirta, kaip atrodo, ko sąmoningai nėra, kokia stoties spalva. Kiekvienas žingsnis buvo tikrinamas realiame televizoriuje, ne tik emuliatoriuje.
+- Kiekvienas pakeitimas ėjo per atskirą peržiūrą — testai, specifikacijos atitikimas, kodo kokybė — o nebuvo priimtas „nes veikia".
+
+Tai nereiškia, kad kodas sugeneruotas ir pamirštas. Bet tai ir nėra rankų darbas nuo pirmos iki paskutinės eilutės. Jei ieškai projekto, kurį žmogus parašė pats, šis toks nėra — geriau žinoti iš anksto.
+
 ## Kreditai ir licencija
 
 **Radijas** platinamas pagal [GPL-3.0-only](LICENSE).
@@ -88,3 +98,5 @@ Kadangi dalis kodo yra išvestinė, visa programėlė lieka GPL-3.0-only: jei pl
 The palette is derived from each station's brand colour and tested for WCAG 4.5:1 contrast. There is deliberately no pause control anywhere, so the app can never be left silently "playing".
 
 Built on the [Fogwave](https://github.com/kalarina-bit/Fogwave) playback engine (GPL-3.0-only); the TV interface, design system, focus model and tests are original. Licensed GPL-3.0-only.
+
+**Built with AI assistance:** the code, tests and documentation were written by DeepSeek V4.1 Flash running in an OpenCode agent, under human direction. Product and design decisions, and every device check, were made by a human.
