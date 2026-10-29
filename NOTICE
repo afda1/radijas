@@ -1,0 +1,16 @@
+Radijas
+Copyright (C) 2026 Radijas contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, version 3 of the License. See LICENSE for the full text.
+
+This program includes code derived from Fogwave
+(https://github.com/kalarina-bit/Fogwave),
+Copyright (C) 2026 Fogwave contributors,
+licensed under GPL-3.0-only.
+
+The derived parts are the playback engine: the Media3 session service, the
+playback manager, the reconnect logic and the station catalogue. The television
+interface, design system, focus model, artwork and tests were written for this
+project.

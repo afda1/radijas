@@ -20,6 +20,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Fogwave"
+rootProject.name = "Radijas"
 
 include(":app")

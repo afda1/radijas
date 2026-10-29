@@ -43,11 +43,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(UnstableApi::class)
-class FogwavePlaybackService : MediaLibraryService() {
+class RadijasPlaybackService : MediaLibraryService() {
     private var mediaLibrarySession: MediaLibrarySession? = null
     private lateinit var repository: RadioRepository
     private lateinit var player: ExoPlayer
-    private var audioEffectsEngine: AudioEffectsEngine? = null
 
     private val serviceScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -65,7 +64,7 @@ class FogwavePlaybackService : MediaLibraryService() {
 
     private val httpDataSourceFactory: DefaultHttpDataSource.Factory by lazy {
         DefaultHttpDataSource.Factory()
-            .setUserAgent("FogwaveRadio/${BuildConfig.VERSION_NAME} (Android; Icecast/Shoutcast Client)")
+            .setUserAgent("Radijas/${BuildConfig.VERSION_NAME} (Android; Icecast/Shoutcast Client)")
             .setDefaultRequestProperties(mapOf("Icy-MetaData" to "1"))
             .setConnectTimeoutMs(10_000)
             .setReadTimeoutMs(10_000)
@@ -112,7 +111,7 @@ class FogwavePlaybackService : MediaLibraryService() {
             if (parentId != ROOT_ID) {
                 return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
             }
-            val items = repository.stations.map { it.toMediaItem(this@FogwavePlaybackService) }
+            val items = repository.stations.map { it.toMediaItem(this@RadijasPlaybackService) }
             return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.copyOf(items), params))
         }
 
@@ -123,7 +122,7 @@ class FogwavePlaybackService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<MediaItem>> {
             val station = repository.stations.find { it.id == mediaId }
                 ?: return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
-            return Futures.immediateFuture(LibraryResult.ofItem(station.toMediaItem(this@FogwavePlaybackService), null))
+            return Futures.immediateFuture(LibraryResult.ofItem(station.toMediaItem(this@RadijasPlaybackService), null))
         }
 
         override fun onAddMediaItems(
@@ -136,7 +135,7 @@ class FogwavePlaybackService : MediaLibraryService() {
                     item
                 } else {
                     repository.stations.find { it.id == item.mediaId }
-                        ?.toMediaItem(this@FogwavePlaybackService)
+                        ?.toMediaItem(this@RadijasPlaybackService)
                         ?: item
                 }
             }.toMutableList()
@@ -329,11 +328,6 @@ class FogwavePlaybackService : MediaLibraryService() {
                 addListener(resiliencePlayerListener)
             }
 
-        Log.d(TAG, "Audio session id for effects: ${player.audioSessionId}")
-        audioEffectsEngine = AudioEffectsEngine(applicationContext, player.audioSessionId).also {
-            AudioEffectsController.attach(it)
-        }
-
         registerNetworkCallback()
 
         // Tapping the media notification brings the app back to the front.
@@ -399,10 +393,6 @@ class FogwavePlaybackService : MediaLibraryService() {
         networkCallback?.let { cb ->
             try { connectivityManager?.unregisterNetworkCallback(cb) } catch (_: Exception) {}
         }
-        audioEffectsEngine?.let {
-            AudioEffectsController.detach(it)
-            it.release()
-        }
         player.removeListener(resiliencePlayerListener)
         player.release()
         mediaLibrarySession?.release()
@@ -411,8 +401,8 @@ class FogwavePlaybackService : MediaLibraryService() {
     }
 
     companion object {
-        private const val ROOT_ID = "fogwave_root"
-        private const val TAG = "FogwavePlaybackService"
+        private const val ROOT_ID = "radijas_root"
+        private const val TAG = "RadijasPlaybackService"
         private const val LIVE_RESYNC_AFTER_MS = 30_000L
 
         /** Action of the notification's only button; carries no transport semantics. */

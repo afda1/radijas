@@ -14,7 +14,7 @@
         android:banner="@drawable/banner"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.Fogwave">
+        android:theme="@style/Theme.Radijas">
 
         <activity
             android:name=".MainActivity"
@@ -28,7 +28,7 @@
         </activity>
 
         <service
-            android:name=".player.FogwavePlaybackService"
+            android:name=".player.RadijasPlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
