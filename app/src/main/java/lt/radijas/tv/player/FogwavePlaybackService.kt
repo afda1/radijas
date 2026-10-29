@@ -78,6 +78,42 @@ class FogwavePlaybackService : MediaLibraryService() {
         .build()
 
     private val librarySessionCallback = object : MediaLibrarySession.Callback {
+        /**
+         * The design has no pause control anywhere. Every controller that is not this app's own
+         * `MediaController` is handed a read-only command set at connection time, so play/pause,
+         * prepare, seeking and replacing the item are never advertised to it - neither through
+         * Media3's controller API (Assistant, other apps) nor, because Media3 copies the
+         * notification controller's command set into the platform session, through the system
+         * media controls or the media button receiver.
+         *
+         * `session.isMediaNotificationController` singles out the notification's own internal
+         * controller, which connects from this package but only renders the notification.
+         */
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            val isNotificationController = session.isMediaNotificationController(controller)
+            val fullControl = SessionCommandPolicy.allowsFullControl(
+                controllerPackage = controller.packageName,
+                appPackage = packageName,
+                isNotificationController = isNotificationController
+            )
+            if (fullControl) {
+                // Default session + library commands and every player command: our own
+                // MediaController still has to prepare, play, set items and stop.
+                return MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
+            }
+            Log.d(
+                TAG,
+                "Restricted controller ${controller.packageName} (notification=$isNotificationController)"
+            )
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
+                .setAvailablePlayerCommands(SessionCommandPolicy.externalControllerCommands())
+                .build()
+        }
+
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -183,7 +219,17 @@ class FogwavePlaybackService : MediaLibraryService() {
         override fun onMetadata(metadata: Metadata) {
             val icy = metadata.getFirstEntryOfType(IcyInfo::class.java) ?: return
             Log.d(TAG, "ICY metadata: title=${icy.title}")
+            val previous = TrackTitleState.title.value
             TrackTitleState.update(icy.title)
+            if (TrackTitleState.title.value != previous) {
+                // Media3 never forwards metadata to controllers, so it also never updates the
+                // notification on its own. Nudge it only when the visible text actually changed.
+                try {
+                    triggerNotificationUpdate()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Notification title update failed", e)
+                }
+            }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -283,6 +329,9 @@ class FogwavePlaybackService : MediaLibraryService() {
 
     override fun onCreate() {
         super.onCreate()
+        // Must be replaced before the session is built: Media3 updates the notification from the
+        // session's own events and would otherwise post its default transport-control notification.
+        setMediaNotificationProvider(RadijasNotificationProvider(this))
         repository = RadioRepository(applicationContext)
 
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
@@ -334,6 +383,35 @@ class FogwavePlaybackService : MediaLibraryService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaLibrarySession
 
+    /**
+     * „Stabdyti" in the notification targets the service directly (see
+     * [RadijasNotificationProvider]), so it keeps working even when the activity is gone. This
+     * path is deliberately independent of the session: no controller has to be connected.
+     */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            Log.d(TAG, "Stop requested from notification")
+            stopPlayback()
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    /** Ends playback and every pending reconnect; the service is stopped by the caller. */
+    private fun stopPlayback() {
+        retryJob?.cancel()
+        retryJob = null
+        retryAttempt = 0
+        player.playWhenReady = false
+        player.stop()
+        TrackTitleState.clear()
+        // `stopSelf()` alone cannot end the service while the app's own MediaController still
+        // binds it, so remove the notification explicitly: after „Stabdyti" nothing must keep
+        // looking like it is playing.
+        stopForeground(STOP_FOREGROUND_REMOVE)
+    }
+
     override fun onTaskRemoved(rootIntent: Intent?) {
         if (!player.playWhenReady || player.mediaItemCount == 0) {
             player.pause()
@@ -362,5 +440,8 @@ class FogwavePlaybackService : MediaLibraryService() {
         private const val ROOT_ID = "fogwave_root"
         private const val TAG = "FogwavePlaybackService"
         private const val LIVE_RESYNC_AFTER_MS = 30_000L
+
+        /** Action of the notification's only button; carries no transport semantics. */
+        const val ACTION_STOP = "lt.radijas.tv.STOP"
     }
 }

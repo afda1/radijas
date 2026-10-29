@@ -10,4 +10,8 @@
     <string name="status_reconnecting">Bandau vėl…</string>
     <string name="status_no_connection">Nepavyksta prisijungti. Paspausk OK.</string>
     <string name="status_paused">Pristabdyta. Paspausk OK.</string>
+
+    <!-- Media notification. The only control is stopping playback; there is no pause anywhere. -->
+    <string name="notification_channel_name">Grojimas</string>
+    <string name="notification_stop">Stabdyti</string>
 </resources>
