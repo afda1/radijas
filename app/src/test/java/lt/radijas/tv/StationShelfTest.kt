@@ -15,6 +15,7 @@ import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
 import lt.radijas.tv.ui.StationShelf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,5 +92,61 @@ class StationShelfTest {
 
         assertEquals("selection must not scroll the shelf", 0, listState.firstVisibleItemIndex)
         composeTestRule.onNodeWithTag("station-tile-zip").assertIsFocused()
+    }
+
+    /**
+     * At launch the shelf is composed before the station is known, so the first run of the reveal
+     * effect has no id to reveal. The reveal must run again when that initial station arrives -
+     * otherwise the row stays at ZIP FM and the ring lands on the first tile even though the last
+     * played station is, say, Radiocentras (index 9).
+     */
+    @Test
+    fun `reveals the station when it is resolved after first composition`() {
+        lateinit var listState: LazyListState
+        val playingId = mutableStateOf<String?>(null)
+        composeTestRule.setContent {
+            listState = rememberLazyListState()
+            StationShelf(
+                stations = stations,
+                playingId = playingId.value,
+                onSelect = {},
+                listState = listState
+            )
+        }
+        composeTestRule.waitForIdle()
+        assertEquals("nothing to reveal before the station is known", 0, listState.firstVisibleItemIndex)
+
+        // Radiocentras is the last station, well outside the initial viewport.
+        playingId.value = "rc"
+        composeTestRule.waitForIdle()
+
+        assertTrue("the shelf must scroll to the resolved station", listState.firstVisibleItemIndex > 0)
+        composeTestRule.onNodeWithTag("station-tile-rc").assertIsFocused()
+    }
+
+    /** Once the initial station has been revealed, later selections must never move the row again. */
+    @Test
+    fun `a later playing id change does not move the shelf or the focus`() {
+        lateinit var listState: LazyListState
+        val playingId = mutableStateOf<String?>(null)
+        composeTestRule.setContent {
+            listState = rememberLazyListState()
+            StationShelf(
+                stations = stations,
+                playingId = playingId.value,
+                onSelect = {},
+                listState = listState
+            )
+        }
+        playingId.value = "rc"
+        composeTestRule.waitForIdle()
+        val revealedIndex = listState.firstVisibleItemIndex
+        assertTrue("the late reveal must have scrolled the row", revealedIndex > 0)
+
+        playingId.value = "zip"
+        composeTestRule.waitForIdle()
+
+        assertEquals("only the initial reveal may scroll", revealedIndex, listState.firstVisibleItemIndex)
+        composeTestRule.onNodeWithTag("station-tile-rc").assertIsFocused()
     }
 }

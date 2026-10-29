@@ -24,20 +24,22 @@ const val NO_CONNECTION_AFTER_MS = 30_000L
  * 1. Playing is playing, even if the silence counter has not been reset yet.
  * 2. Paused without intent to play means something else took the audio focus.
  * 3. Silence past the threshold is a failure the retry loop has not fixed yet.
- * 4. A player error below the threshold is not a final failure: the service keeps retrying, so
- *    the hero must keep saying "trying again" instead of blinking to the failure copy on every
- *    attempt (spec 6.2: the failure copy appears after ~30 s of failure).
- * 5. Any shorter silence means the retry loop is still working.
+ * 4. Below the threshold, only a stream that has already played counts as a reconnection. A first
+ *    connection may buffer for a while, but it is still connecting, not "trying again".
+ * 5. A player error below the threshold is not a final failure: the service keeps retrying, so
+ *    the hero must not blink to the failure copy on every attempt (spec 6.2: the failure copy
+ *    appears after ~30 s of failure).
  */
 fun playerStatus(
     playerState: PlayerState,
     playWhenReady: Boolean,
-    silentForMs: Long
+    silentForMs: Long,
+    reconnecting: Boolean
 ): PlayerStatus = when {
     playerState is PlayerState.Playing -> PlayerStatus.PLAYING
     playerState is PlayerState.Paused && !playWhenReady -> PlayerStatus.PAUSED
     silentForMs >= NO_CONNECTION_AFTER_MS -> PlayerStatus.NO_CONNECTION
-    playerState is PlayerState.Error -> PlayerStatus.RECONNECTING
-    silentForMs > 0 -> PlayerStatus.RECONNECTING
+    playerState is PlayerState.Error && reconnecting -> PlayerStatus.RECONNECTING
+    silentForMs > 0 && reconnecting -> PlayerStatus.RECONNECTING
     else -> PlayerStatus.CONNECTING
 }

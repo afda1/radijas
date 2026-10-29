@@ -2,12 +2,10 @@ package lt.radijas.tv
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -21,6 +19,7 @@ import lt.radijas.tv.player.RadioPlayerManager
 import lt.radijas.tv.ui.NowPlayingScreen
 import lt.radijas.tv.ui.NowPlayingUiState
 import lt.radijas.tv.ui.PlayerStatus
+import lt.radijas.tv.ui.SilenceClock
 import lt.radijas.tv.ui.playerStatus
 import lt.radijas.tv.ui.theme.RadijasTheme
 
@@ -29,11 +28,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var playerManager: RadioPlayerManager
     private var currentStation by mutableStateOf<RadioStation?>(null)
 
-    // Elapsed-realtime mark of when playback last stopped being `Playing`. Wall clock is useless
-    // here: it can jump, and the user cares about "how long have I been staring at a silent TV".
-    private var silentSinceMs by mutableLongStateOf(SystemClock.elapsedRealtime())
-    private var silentForMs by mutableLongStateOf(0L)
-    private var wasPlaying by mutableStateOf(false)
+    // Elapsed-realtime based: wall clock can jump, and the user cares about "how long have I been
+    // staring at a silent TV". Owns the silence tick and the "first connection vs lost
+    // connection" distinction that both feed the hero's status line.
+    private val silence = SilenceClock()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +52,13 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(playerState) { trackSilence(playerState) }
 
-                val status = playerStatus(playerState, playWhenReady, silentForMs)
+                val status = playerStatus(
+                    playerState = playerState,
+                    playWhenReady = playWhenReady,
+                    silentForMs = silence.silentForMs,
+                    // A silence is only a reconnection once this attempt has been audible.
+                    reconnecting = silence.reconnecting
+                )
                 // Read through a State so the callback below can stay remembered (stable) while
                 // still seeing the newest status: a new lambda every tick would recompose every
                 // station tile and undo the tile-level `remember`.
@@ -97,47 +101,28 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * A new attempt gets its own 30 s of "trying".
+     * A new attempt gets its own 30 s of "trying", and its first silence is a *connection*, not a
+     * reconnection.
      *
      * Without this, OK on a dead station (or a switch to another one) would leave the failure
      * copy on screen, because the previous outage's silence is still counted, and the press
-     * would look like it did nothing.
+     * would look like it did nothing. It also stops the previous station's `reconnecting` from
+     * making the new station's first buffer read „Bandau vėl…".
      */
     private fun restartSilenceClock() {
-        silentSinceMs = SystemClock.elapsedRealtime()
-        silentForMs = 0L
+        silence.restart()
     }
 
     /**
-     * Keeps [silentForMs] honest: zero while playing, then the time since playback stopped.
+     * Keeps the silence clock honest: zero while playing, then the time since playback stopped.
      *
      * The tick drives the `RECONNECTING` -> `NO_CONNECTION` threshold, so it has to keep running
      * while the player is silent even though nothing else on screen changes.
      */
     private suspend fun trackSilence(state: PlayerState) {
-        when (state) {
-            is PlayerState.Playing -> {
-                wasPlaying = true
-                silentSinceMs = SystemClock.elapsedRealtime()
-                silentForMs = 0L
-                return
-            }
-            // Nothing is being attempted (stopped): not silence, and no reason to keep a
-            // one-second tick alive while the activity sits in the background.
-            is PlayerState.Idle -> {
-                wasPlaying = false
-                silentSinceMs = SystemClock.elapsedRealtime()
-                silentForMs = 0L
-                return
-            }
-            else -> Unit
-        }
-        if (wasPlaying) {
-            silentSinceMs = SystemClock.elapsedRealtime()
-        }
-        wasPlaying = false
+        if (!silence.onState(state)) return
         while (true) {
-            silentForMs = SystemClock.elapsedRealtime() - silentSinceMs
+            silence.tick()
             delay(SILENCE_TICK_MS)
         }
     }
@@ -152,6 +137,7 @@ class MainActivity : ComponentActivity() {
         // Launching from the TV launcher while the activity is still alive arrives here
         // (launchMode="singleTop"), so play the last station again after Home stopped it.
         val station = StartupStation.resolve(repository)
+        restartSilenceClock()
         currentStation = station
         repository.setLastStationId(station.id)
         playerManager.playStation(station)

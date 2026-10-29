@@ -9,7 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -30,7 +33,7 @@ import lt.radijas.tv.data.model.RadioStation
 @Composable
 fun StationShelf(
     stations: List<RadioStation>,
-    playingId: String,
+    playingId: String?,
     onSelect: (RadioStation) -> Unit,
     modifier: Modifier = Modifier,
     // Hoisted so a test can observe the row's scroll position; production call sites keep the
@@ -41,25 +44,29 @@ fun StationShelf(
         stations.associate { station -> station.id to FocusRequester() }
     }
 
-    // Captured, not read live: the effect below must reveal the station that was playing when the
-    // shelf first appeared, not chase every later selection.
-    val revealId = remember(stations) { playingId }
+    // One-shot: the shelf reveals the playing station once, when that station first becomes
+    // known, and never moves again on its own. Selection, status ticks and recomposition all
+    // leave the row where the user put it.
+    var hasRevealed by remember(stations) { mutableStateOf(false) }
 
-    // Keyed on the station list only. `playingId` changes on every selection, and keying on it
-    // made the shelf scroll again - snapping the pressed tile to the row's left edge and fighting
-    // Compose's own focus bring-into-view animation, which the user saw as the carousel jumping
-    // and distorting. The user's focus is already on the tile they pressed, so there is nothing
-    // left to scroll to.
-    LaunchedEffect(stations) {
+    // Keyed on `playingId` as well as the station list *because* the id can arrive late: launch
+    // resolves the station after the first composition, so the first run of this effect has no
+    // id to reveal. It has to run again when the id appears - and the flag stops every later run.
+    // (`playingId` intentionally does not drive a scroll on selection: the user's focus is
+    // already on the tile they pressed, and scrolling would fight Compose's own
+    // bring-into-view animation, which the user saw as the carousel jumping and distorting.)
+    LaunchedEffect(stations, playingId) {
+        if (hasRevealed) return@LaunchedEffect
+        val revealId = playingId ?: return@LaunchedEffect
         val revealIndex = stations.indexOfFirst { it.id == revealId }
-        if (revealIndex >= 0) {
-            // LazyRow only composes on-screen items, so a bare requestFocus on an off-screen
-            // station (m1 at launch) would silently fail. Scroll first, then wait for the
-            // scrolled-to tile to be composed and attached to its FocusRequester.
-            listState.scrollToItem(revealIndex)
-            withFrameNanos { }
-            focusRequesters[revealId]?.requestFocus()
-        }
+        if (revealIndex < 0) return@LaunchedEffect
+        // LazyRow only composes on-screen items, so a bare requestFocus on an off-screen
+        // station (m1 at launch) would silently fail. Scroll first, then wait for the
+        // scrolled-to tile to be composed and attached to its FocusRequester.
+        listState.scrollToItem(revealIndex)
+        withFrameNanos { }
+        focusRequesters[revealId]?.requestFocus()
+        hasRevealed = true
     }
 
     LazyRow(
