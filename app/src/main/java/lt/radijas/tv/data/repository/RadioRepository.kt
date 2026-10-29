@@ -15,7 +15,7 @@ class RadioRepository(context: Context) {
             name = "ZIP FM",
             streamUrl = "https://stream4.radijas.lt/zipfm",
             iconResId = R.drawable.ic_station_zipfm,
-            brandColor = 0xFFFF5A1FL
+            brandColor = 0xFF1717E8L
         ),
         RadioStation(
             id = "powerhit",
@@ -23,63 +23,63 @@ class RadioRepository(context: Context) {
             // Stable revma entry point: it redirects to a fresh node URL with a short-lived token.
             streamUrl = "https://stream.rcs.revma.com/f31w7e0fveuvv",
             iconResId = R.drawable.ic_station_powerhit,
-            brandColor = 0xFFE5007DL
+            brandColor = 0xFFED1C24L
         ),
         RadioStation(
             id = "powerhitgold",
             name = "Power Hit Radio Gold",
             streamUrl = "https://stream.rcs.revma.com/asdpz3qfbhuvv",
             iconResId = R.drawable.ic_station_powerhitgold,
-            brandColor = 0xFFC9A227L
+            brandColor = 0xFFC9A13DL
         ),
         RadioStation(
             id = "rock",
             name = "Rock FM",
             streamUrl = "https://stream4.radijas.lt/rockfm",
             iconResId = R.drawable.ic_station_rockfm,
-            brandColor = 0xFFD7263DL
+            brandColor = 0xFFD72828L
         ),
         RadioStation(
             id = "relax",
             name = "Relax FM",
             streamUrl = "https://stream4.radijas.lt/relaxfm",
             iconResId = R.drawable.ic_station_relaxfm,
-            brandColor = 0xFF35B08AL
+            brandColor = 0xFF7C4DB3L
         ),
         RadioStation(
             id = "lietus",
             name = "Lietus",
             streamUrl = "https://stream.m-1.fm/lietus/aacp64",
             iconResId = R.drawable.ic_station_lietus,
-            brandColor = 0xFF0E8FD1L
+            brandColor = 0xFF009A61L
         ),
         RadioStation(
             id = "m1",
             name = "M-1",
             streamUrl = "https://stream.m-1.fm/m1/aacp64",
             iconResId = R.drawable.ic_station_m1,
-            brandColor = 0xFFFFC400L
+            brandColor = 0xFF1638C6L
         ),
         RadioStation(
             id = "plus",
             name = "M-1 Plius",
             streamUrl = "https://radio.m-1.fm/m1plius/aacp64",
             iconResId = R.drawable.ic_station_m1plus,
-            brandColor = 0xFF1E6FE8L
+            brandColor = 0xFFC92636L
         ),
         RadioStation(
             id = "goldfm",
             name = "Gold FM",
             streamUrl = "https://stream.goldfm.lt/goldfm.aac",
             iconResId = R.drawable.ic_station_goldfm,
-            brandColor = 0xFFB98B3EL
+            brandColor = 0xFFC9A13AL
         ),
         RadioStation(
             id = "rc",
-            name = "RC",
+            name = "Radiocentras",
             streamUrl = "https://stream1.rc.lt/rc128.mp3",
             iconResId = R.drawable.ic_station_rc,
-            brandColor = 0xFFE4322BL
+            brandColor = 0xFFF05A28L
         )
     )
 

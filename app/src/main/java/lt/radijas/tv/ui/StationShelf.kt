@@ -3,6 +3,7 @@ package lt.radijas.tv.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,22 +32,33 @@ fun StationShelf(
     stations: List<RadioStation>,
     playingId: String,
     onSelect: (RadioStation) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Hoisted so a test can observe the row's scroll position; production call sites keep the
+    // default and never share the state.
+    listState: LazyListState = rememberLazyListState()
 ) {
-    val listState = rememberLazyListState()
     val focusRequesters = remember(stations) {
         stations.associate { station -> station.id to FocusRequester() }
     }
 
-    LaunchedEffect(playingId, stations) {
-        val playingIndex = stations.indexOfFirst { it.id == playingId }
-        if (playingIndex >= 0) {
+    // Captured, not read live: the effect below must reveal the station that was playing when the
+    // shelf first appeared, not chase every later selection.
+    val revealId = remember(stations) { playingId }
+
+    // Keyed on the station list only. `playingId` changes on every selection, and keying on it
+    // made the shelf scroll again - snapping the pressed tile to the row's left edge and fighting
+    // Compose's own focus bring-into-view animation, which the user saw as the carousel jumping
+    // and distorting. The user's focus is already on the tile they pressed, so there is nothing
+    // left to scroll to.
+    LaunchedEffect(stations) {
+        val revealIndex = stations.indexOfFirst { it.id == revealId }
+        if (revealIndex >= 0) {
             // LazyRow only composes on-screen items, so a bare requestFocus on an off-screen
             // station (m1 at launch) would silently fail. Scroll first, then wait for the
             // scrolled-to tile to be composed and attached to its FocusRequester.
-            listState.scrollToItem(playingIndex)
+            listState.scrollToItem(revealIndex)
             withFrameNanos { }
-            focusRequesters[playingId]?.requestFocus()
+            focusRequesters[revealId]?.requestFocus()
         }
     }
 
