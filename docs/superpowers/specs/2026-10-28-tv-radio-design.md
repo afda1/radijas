@@ -161,7 +161,7 @@ Paliekam ir perrašom minimaliai: `data/`, `player/`.
 | `player/RadioPlayerManager.kt` | Naudojam. Pridedam `stop()` ir „sustabdyti kai appsas išeina“ logiką. |
 | `player/StationMediaItems.kt` | Naudojam. |
 | `player/FogwavePlaybackService.kt` (metadata) | **Naujas darbas.** ICY meta šiandien neskaitomas. Media3 `ProgressiveMediaPeriod` ICY meta pateikia kaip atskirą `MimeTypes.APPLICATION_ICY` taką; `MetadataDecoderFactory` turi `IcyDecoder`, o `MetadataRenderer` (įjungtas `DefaultRenderersFactory`) jį iššifruoja į `IcyInfo`, kuris ateina per `Player.Listener.onMetadata`. Reikia: `onMetadata` → `IcyInfo.title` → UI būsena, atnaujinti tik pasikeitus, išvalyti perjungus stotį. |
-| `player/AudioEffectsEngine.kt` | Paliekam kode, bet **be UI ir išjungta**. HDMI išvestis kai kuriuose TV apeina programos ekvalaizerį, todėl žadėti jo negalim. |
+| `player/AudioEffectsEngine.kt` | **Pašalinta 0.1.0 versijoje.** Be UI jo neįmanoma įjungti, o kiekvienas grotuvas vis tiek kurdavo `Equalizer`, `LoudnessEnhancer` ir `DynamicsProcessing` ant garso sesijos. Televizoriaus garso kelyje tai nereikalinga rizika. |
 | `data/model/RadioStation.kt` | Naudojam, išmetam `ViewMode`, `IconSizeStep`, `AppTab`, `ExtraPlayerTab`. |
 | `data/repository/RadioRepository.kt` | Naudojam stotims ir `last_station_id`. Išmetam favorites/recents/view mode. |
 | `ui/**` | Trinam. |

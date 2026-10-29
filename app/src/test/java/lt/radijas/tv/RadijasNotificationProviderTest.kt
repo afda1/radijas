@@ -10,7 +10,7 @@ import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.collect.ImmutableList
-import lt.radijas.tv.player.FogwavePlaybackService
+import lt.radijas.tv.player.RadijasPlaybackService
 import lt.radijas.tv.player.RadijasNotificationProvider
 import lt.radijas.tv.player.TrackTitleState
 import org.junit.After
@@ -67,8 +67,8 @@ class RadijasNotificationProviderTest {
             shadowOf(actions[0].actionIntent).isService
         )
         val started = shadowOf(actions[0].actionIntent).savedIntent
-        assertEquals(FogwavePlaybackService::class.java.name, started.component?.className)
-        assertEquals(FogwavePlaybackService.ACTION_STOP, started.action)
+        assertEquals(RadijasPlaybackService::class.java.name, started.component?.className)
+        assertEquals(RadijasPlaybackService.ACTION_STOP, started.action)
     }
 
     @Test

@@ -129,8 +129,8 @@ class RadijasNotificationProvider(private val context: Context) : MediaNotificat
     private fun stopIntent(): PendingIntent = PendingIntent.getService(
         context,
         REQUEST_STOP,
-        Intent(context, FogwavePlaybackService::class.java)
-            .setAction(FogwavePlaybackService.ACTION_STOP),
+        Intent(context, RadijasPlaybackService::class.java)
+            .setAction(RadijasPlaybackService.ACTION_STOP),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
 

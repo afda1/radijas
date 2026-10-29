@@ -16,6 +16,7 @@ Atnaujinta: 2026-10-29
 - Pranešime tik „Stabdyti", išoriniams valdikliams atimtos rašymo komandos.
 - 63 testai, paleidžiami JVM'e be emuliatoriaus.
 - README, ekrano nuotraukos, logotipas, TV baneris, AI autorystės disclosure.
+- Išvalyta prieš išleidimą: pašalintas ekvalaizerio kodas, nenaudojami piešiniai, `Coil`, `material3`, `viewmodel-compose`, `roborazzi`, instrumentation testų priklausomybės ir visi `Fogwave` pavadinimai kode (`RadijasPlaybackService`, `Theme.Radijas`, `radijas_prefs`).
 
 ## Liko iki išleidimo
 

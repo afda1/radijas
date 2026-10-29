@@ -70,7 +70,7 @@ class RadioPlayerManager(private val context: Context) {
 
     private fun connectToPlaybackService() {
         if (released || controllerFuture != null) return
-        val sessionToken = SessionToken(context, ComponentName(context, FogwavePlaybackService::class.java))
+        val sessionToken = SessionToken(context, ComponentName(context, RadijasPlaybackService::class.java))
         val future = MediaController.Builder(context, sessionToken).buildAsync()
         controllerFuture = future
         future.addListener({
@@ -90,7 +90,7 @@ class RadioPlayerManager(private val context: Context) {
                     _playWhenReady.value = c.playWhenReady
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to connect to FogwavePlaybackService", e)
+                Log.e(TAG, "Failed to connect to RadijasPlaybackService", e)
                 // Allow the next play request to try again.
                 controllerFuture = null
                 pendingStation = null

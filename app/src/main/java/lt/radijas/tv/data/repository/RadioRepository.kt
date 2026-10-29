@@ -7,7 +7,7 @@ import lt.radijas.tv.StartupStation
 import lt.radijas.tv.data.model.RadioStation
 
 class RadioRepository(context: Context) {
-    private val prefs = context.getSharedPreferences("fogwave_prefs", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("radijas_prefs", Context.MODE_PRIVATE)
 
     val stations: List<RadioStation> = listOf(
         RadioStation(
