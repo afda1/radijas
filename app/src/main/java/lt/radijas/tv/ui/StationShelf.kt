@@ -53,7 +53,10 @@ fun StationShelf(
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 48.dp),
+        // Not the safe area (that is applied once by the screen): this 8 dp inset is only
+        // head-room for the focused tile's 5 % zoom, which otherwise gets its ring clipped
+        // by the lazy row's own bounds at the first and last station.
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(stations, key = { station -> station.id }) { station ->

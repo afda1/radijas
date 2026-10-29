@@ -5,16 +5,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -22,10 +25,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +40,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.R
 import lt.radijas.tv.data.model.RadioStation
+import lt.radijas.tv.ui.theme.RadijasBackground
+import lt.radijas.tv.ui.theme.RadijasContent
+import lt.radijas.tv.ui.theme.tonalSurface
 
 /**
  * Display-only "now playing" hero.
@@ -51,20 +61,25 @@ fun HeroPanel(
     trackTitle: String? = null,
     modifier: Modifier = Modifier
 ) {
-    val brandColor = Color(station.brandColor)
-
     Box(
         modifier = modifier
             .testTag("hero-panel")
             .clip(RoundedCornerShape(28.dp))
+            // The hero is a tinted version of the page, never a flat brand slab: the brand
+            // survives at 55 % in the middle and dissolves into the page colour at the edges,
+            // so the same layout works for a pale yellow and a deep red brand alike.
             .background(
-                Brush.horizontalGradient(
-                    0f to brandColor.copy(alpha = 0.55f),
-                    0.55f to brandColor.copy(alpha = 0.16f),
-                    1f to Color.Transparent
+                Brush.radialGradient(
+                    colors = listOf(
+                        tonalSurface(station.brandColor, 0.55f),
+                        RadijasBackground
+                    )
                 )
             )
-            .padding(horizontal = 44.dp, vertical = 28.dp)
+            // 20 dp, not 28: the 96 sp name plus the fixed 26 sp track block and the status
+            // line only just fit the hero at 1080p (a 540 dp-tall canvas), and the later
+            // children of a Column are the ones a short hero would squeeze to nothing.
+            .padding(horizontal = 44.dp, vertical = 20.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -74,20 +89,13 @@ fun HeroPanel(
                 Text(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.55f)
+                    color = RadijasContent.copy(alpha = 0.55f)
                 )
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = station.name,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.W600,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
+                StationName(station.name)
+                Spacer(Modifier.height(2.dp))
                 TrackTitleLine(trackTitle)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
                 StatusLine(status)
             }
             Image(
@@ -103,19 +111,84 @@ fun HeroPanel(
     }
 }
 
+/** Largest hero-name size, from the design spec. */
+private val HeroNameMaxSize = 96.sp
+
+/** Smallest the name may shrink to before an ellipsis is the lesser evil. */
+private val HeroNameMinSize = 48.sp
+
+/** Line height of the name; the band below keeps the block at one height for every station. */
+private val HeroNameLineHeight = 104.sp
+
+/**
+ * The station name, at 96 sp whenever it fits the hero's text column.
+ *
+ * At 1080p that column is ~608 dp, and "Power Hit Radio Gold" is wider than that at 96 sp, so
+ * a fixed size would ellipsise two of the ten stations to "Power Hit R…". Instead the name
+ * steps down until it fits on one line: a smaller name is still the station's name, a cut one
+ * is not. The floor is 48 sp, below which the ellipsis returns.
+ */
+@Composable
+private fun StationName(name: String) {
+    val style = MaterialTheme.typography.displaySmall.copy(
+        fontSize = HeroNameMaxSize,
+        lineHeight = HeroNameLineHeight,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-1.5).sp,
+        // The hero is height-starved at 1080p; the font's built-in top and bottom padding
+        // would cost ~8 dp and push the status line out.
+        platformStyle = PlatformTextStyle(includeFontPadding = false)
+    )
+    BoxWithConstraints(
+        // A fixed band, like the track block: a station with a fitted 64 sp name must not
+        // shift the label above it or the status line below it when the station changes. 113 dp
+        // is the 96 sp name's natural line box (its font metrics are 0.5 dp taller than the
+        // 104 sp line height); heightIn lets a larger system font scale grow the band instead
+        // of painting the name over the track line.
+        modifier = Modifier.heightIn(min = 113.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        val measurer = rememberTextMeasurer()
+        val fontScale = LocalDensity.current.fontScale
+        val availableWidth = constraints.maxWidth
+        val fontSize = remember(name, availableWidth, fontScale, style) {
+            var size = HeroNameMaxSize.value
+            while (size > HeroNameMinSize.value) {
+                val measured = measurer.measure(
+                    text = AnnotatedString(name),
+                    style = style.copy(fontSize = size.sp),
+                    maxLines = 1,
+                    softWrap = false
+                )
+                if (measured.size.width <= availableWidth) break
+                size -= 4f
+            }
+            size.sp
+        }
+        Text(
+            text = name,
+            style = style.copy(fontSize = fontSize),
+            color = RadijasContent,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 @Composable
 private fun TrackTitleLine(trackTitle: String?) {
     // A fixed-height block that is composed in both cases: the empty state reserves exactly the
-    // same 48 dp, so the station name and status line never move when a title arrives.
+    // same 44 dp, so the station name and status line never move when a title arrives.
     Box(
-        modifier = Modifier.height(48.dp),
+        modifier = Modifier.height(44.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = trackTitle.orEmpty(),
             modifier = Modifier.testTag("hero-track-title"),
             fontSize = 26.sp,
-            color = Color.White.copy(alpha = 0.66f),
+            lineHeight = 32.sp,
+            color = RadijasContent.copy(alpha = 0.66f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -133,13 +206,13 @@ private fun StatusLine(status: PlayerStatus) {
         EqualizerBars(active = status == PlayerStatus.PLAYING)
         Spacer(Modifier.width(10.dp))
         // One line, always: the longest copy (~38 characters at 16sp) is a small fraction of
-        // the hero's ~1500dp text column, so wrapping is impossible and the line height - and
+        // the hero's ~600dp text column, so wrapping is impossible and the line height - and
         // with it the station name above - cannot move between states.
         Text(
             text = stringResource(status.textRes()),
             modifier = Modifier.testTag("hero-status"),
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White.copy(alpha = 0.82f),
+            color = RadijasContent.copy(alpha = 0.82f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -162,7 +235,7 @@ private fun EqualizerBars(active: Boolean) {
                     .width(4.dp)
                     .height(barHeight)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.85f))
+                    .background(RadijasContent.copy(alpha = 0.85f))
             )
         }
     }

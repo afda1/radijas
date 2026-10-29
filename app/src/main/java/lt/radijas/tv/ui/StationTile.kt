@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -35,13 +36,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.data.model.RadioStation
+import lt.radijas.tv.ui.theme.RadijasContent
+import lt.radijas.tv.ui.theme.onBrand
+import lt.radijas.tv.ui.theme.tonalSurface
 
 /**
- * One station in the shelf. This is the only focusable element on the screen: the white ring
- * marks where the D-pad is, and OK on it selects the station.
+ * One station in the shelf. This is the only focusable element on the screen: the brand-tinted
+ * ring marks where the D-pad is, and OK on it selects the station.
  */
 @Composable
 fun StationTile(
@@ -74,9 +79,24 @@ fun StationTile(
                 }
             }
             .testTag("station-tile-${station.id}")
+            // The focused tile grows 5 % from its centre, exactly as the design asks. No
+            // animation: focus is still the only thing on screen that moves, and it moves
+            // immediately, never as a delayed flourish.
+            .graphicsLayer {
+                val scale = if (isFocused) 1.05f else 1f
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (isFocused) tonalSurface(station.brandColor, 0.34f)
+                else tonalSurface(station.brandColor, 0.15f)
+            )
             .border(
                 width = 3.dp,
-                color = if (isFocused) Color.White else Color.Transparent,
+                // The ring is the brand itself, lightened until it is readable on the focused
+                // surface: a white ring would be the plainest thing on a screen about colour.
+                color = if (isFocused) onBrand(station.brandColor) else Color.Transparent,
                 shape = RoundedCornerShape(20.dp)
             )
             .padding(10.dp),
@@ -99,9 +119,16 @@ fun StationTile(
         Spacer(Modifier.height(10.dp))
         Text(
             text = station.name,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleSmall.copy(
+                fontSize = 16.sp,
+                lineHeight = 22.sp
+            ),
             fontWeight = if (isFocused) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isFocused) Color.White else Color.White.copy(alpha = 0.72f),
+            color = if (isFocused) {
+                onBrand(station.brandColor)
+            } else {
+                RadijasContent.copy(alpha = 0.72f)
+            },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
