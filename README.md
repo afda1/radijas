@@ -4,7 +4,7 @@
 
 Vienas ekranas, dešimt Lietuvos stočių, jokio meniu. Skirta tiems, kuriems radijas televizoriuje turi įsijungti taip pat paprastai kaip televizijos kanalas.
 
-<img src="docs/screenshots/01-lietus.png" alt="Lietus groja" width="100%">
+<img src="docs/screenshots/tv-lietus.png" alt="Lietus groja" width="100%">
 
 ## Kam tai skirta
 
@@ -16,10 +16,9 @@ Trečia grupė yra tie, kurie tiesiog nori fono. Radijas per televizorių yra ge
 
 ## Kaip atrodo
 
-| | |
-|---|---|
-| <img src="docs/screenshots/01-lietus.png" width="420"> | <img src="docs/screenshots/02-rock-fm.png" width="420"> |
-| <img src="docs/screenshots/03-m1-plius.png" width="420"> | <img src="docs/screenshots/04-radiocentras.png" width="420"> |
+| | | |
+|---|---|---|
+| <img src="docs/screenshots/tv-rock-fm.png" width="330"> | <img src="docs/screenshots/tv-m1-plius.png" width="330"> | <img src="docs/screenshots/tv-radiocentras.png" width="330"> |
 
 Spalva ateina iš stoties ženklo. Perjungi stotį, persidažo visas ekranas: tamsiai žalia Lietui, raudona Rock FM, oranžinė Radiocentrui. Logotipai yra balti siluetai, kad būtų įskaitomi bet kurioje spalvoje ir iš sofos. Tai ne dekoracija: paletė apskaičiuojama taip, kad tekstas visada turėtų bent 4.5:1 kontrastą, ir tai tikrinama automatiškai visoms dešimčiai stočių.
 
@@ -159,7 +158,7 @@ Vienintelis tinklo srautas yra radijo stoties adresas, kurį pasirenki pats. Pro
 Projektas sukurtas dirbtinio intelekto pagalba, žmogui vadovaujant.
 
 - Kodą, testus ir dokumentaciją rašė **DeepSeek V4.1 Flash**, veikiantis per OpenCode agentą.
-- Produkto sprendimus priėmė žmogus (Paulius Zakšauskas): kam skirta, kaip atrodo, ko sąmoningai nėra, kokia kiekvienos stoties spalva. Kiekvienas žingsnis buvo tikrinamas realiame televizoriuje, ne tik emuliatoriuje.
+- Produkto sprendimus priėmė žmogus: kam skirta, kaip atrodo, ko sąmoningai nėra, kokia kiekvienos stoties spalva. Kiekvienas žingsnis buvo tikrinamas realiame televizoriuje, ne tik emuliatoriuje.
 - Kiekvienas pakeitimas ėjo per atskirą peržiūrą: testai, specifikacijos atitikimas, kodo kokybė.
 
 Tai nereiškia, kad kodas sugeneruotas ir pamirštas. Bet tai ir nėra rankų darbas nuo pirmos iki paskutinės eilutės. Jei ieškai projekto, kurį žmogus parašė pats, šis toks nėra, ir geriau žinoti iš anksto.
