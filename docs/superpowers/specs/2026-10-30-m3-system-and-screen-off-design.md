@@ -102,7 +102,6 @@ Minimumas per visas 11 stočių: **label/surfaceVariant 5.47**, **onSurface/surf
 | Plytelė (fokusuota) | ta pati `primaryContainer`; fokusą rodo `border` rėmelis ir 6 % mastelis |
 | Plytelės etiketė | `onSurfaceVariant`; fokusuota — `onPrimaryContainer` |
 | Fokuso rėmelis | `border` (≥ 6:1 prie visų trijų paviršių) |
-| Grojančios plytelės juosta | `primary` |
 | Ekvalaizerio brūkšneliai | `onSurface` |
 | Mygtukas „Ekranas" | `surfaceVariant` + `primary` ikona |
 
@@ -235,3 +234,6 @@ Darbas vidutinis (ne vienas failas). Etapai, kiekvienas atskirai patikrinamas:
 - **Kiekviena plytelė ima savo stoties schemą** (`stationScheme(station.id)`), o ne `MaterialTheme` (ta yra grojamos stoties). Be to kiekviena plytelė būtų vienodos spalvos — būtent ta klaida ir buvo padaryta pirminėje M3 versijoje.
 - Plytelių etiketė `onPrimaryContainer` ant `primaryContainer` = 7.19:1; rėmelis prie `primaryContainer` = 6.0:1.
 - **Logotipų optinė normalizacija:** `ui/theme/StationLogoScale.kt` + `StationLogoScaleTest`; dydis nustatomas pagal rašalo plotą (~4200 dp²), ne pagal `ContentScale.Fit`. Wordmark'ai lieka 1,0, kompaktūs ženklai 0,71–0,93.
+- **Hallmark audito restyle:** hierarchija atstatyta pagal naudotojo žvilgsnį — vardas 64 sp (buvo 96), daina 32 sp (buvo 26), būsena 28 sp (buvo 24), plytelės etiketė 18 sp, plytelė 200 dp; tipas skaitomas iš `RadijasTypography`. „Ekranas" nefokusuotas — tik glyph, fokusuotas — piliulė su užrašu. `ScreenOffBlack` tokenas juodam kadrui.
+- **Grojimo juosta pašalinta (2026-10-30, savininko prašymu):** plytelės žymimos tik fokuso rėmeliu (3 dp `border`) ir 6 % masteliu; jokio papildomo žymėjimo ant grojančios plytelės. „Groja" liko tik accessibility `stateDescription`.
+- **Fokuso grįžimas iš „Ekranas" (2026-10-30):** `ui/ShelfFocusState.kt` + `StationShelf` atsimena, kurią plytelę D-pad paliko, ir `↓` grąžina į ją (su `scrollToItem` + `requestFocus`), o ne į geometriškai artimiausią plytelę po valdikliu. Testas: `HeroPanelTest` „down from the screen-off control returns to the station that was left".
