@@ -4,6 +4,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -13,6 +15,7 @@ import androidx.tv.material3.Shapes
 import androidx.tv.material3.Typography
 import androidx.tv.material3.darkColorScheme
 import lt.radijas.tv.StartupStation
+import lt.radijas.tv.R
 
 /** Page colours from the design spec. They are the same for every station. */
 internal val PageBackground = Color(0xFF141218)
@@ -31,19 +34,27 @@ internal val RadijasShapes = Shapes(
  * The TV type scale with this app's sizes. The sizes are not M3's: a 3 m viewing distance needs
  * them, and they are pinned by the design spec. M3 contributes the line heights and tracking.
  */
+internal val OutfitFamily = FontFamily(
+    Font(R.font.outfit_regular, FontWeight.Normal),
+    Font(R.font.outfit_medium, FontWeight.Medium),
+    Font(R.font.outfit_semibold, FontWeight.SemiBold),
+    Font(R.font.outfit_bold, FontWeight.Bold)
+)
+
 internal val RadijasTypography = Typography(
     // The station name is as big as it needs to be to read the logo's own words from a sofa,
     // not the biggest thing that fits: the logo already carries the name, and the song and the
     // instruction are what the eye needs. 64 sp keeps the hierarchy on the user's job.
     displayLarge = TextStyle(
+        fontFamily = OutfitFamily,
         fontSize = 64.sp,
         lineHeight = 70.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = (-1.0).sp
     ),
-    headlineSmall = TextStyle(fontSize = 32.sp, lineHeight = 38.sp),
-    titleMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
-    labelLarge = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, letterSpacing = 0.1.sp),
+    headlineSmall = TextStyle(fontFamily = OutfitFamily, fontSize = 32.sp, lineHeight = 38.sp),
+    titleMedium = TextStyle(fontFamily = OutfitFamily, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
+    labelLarge = TextStyle(fontFamily = OutfitFamily, fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.1.sp),
 )
 
 /** How much of the station's primary the screen-off control carries when it is focused. */

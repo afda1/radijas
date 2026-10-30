@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
@@ -55,7 +54,7 @@ fun StationShelf(
     val focusRequesters = remember(stations) {
         stations.associate { station -> station.id to FocusRequester() }
     }
-    // Which tile the D-pad left, and the way back: scroll it into view, then focus it.
+    // Return directly to a visible tile; only scroll when it is no longer composed.
     var lastFocusedId by remember(stations) { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     SideEffect {
@@ -64,8 +63,10 @@ fun StationShelf(
             val index = id?.let { target -> stations.indexOfFirst { it.id == target } } ?: -1
             if (id != null && index >= 0) {
                 scope.launch {
-                    listState.scrollToItem(index)
-                    withFrameNanos { }
+                    if (listState.layoutInfo.visibleItemsInfo.none { it.index == index }) {
+                        listState.scrollToItem(index)
+                        withFrameNanos { }
+                    }
                     focusRequesters[id]?.requestFocus()
                 }
             }

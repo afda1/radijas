@@ -15,6 +15,12 @@ playback manager, the reconnect logic and the station catalogue. The television
 interface, design system, focus model, artwork and tests were written for this
 project.
 
+The Outfit font is copyright 2021 The Outfit Project Authors and is distributed
+under the SIL Open Font License 1.1. See app/src/main/assets/licenses/Outfit-OFL.txt.
+
+The screen-darkening icon is adapted from Lucide's monitor-off icon, copyright
+Lucide Icons and Contributors. See app/src/main/assets/licenses/Lucide-LICENSE.txt.
+
 Trademarks
 
 The station names and logos shown by this application are the trademarks of

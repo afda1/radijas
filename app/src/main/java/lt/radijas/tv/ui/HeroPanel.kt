@@ -6,7 +6,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.MarqueeSpacing
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -25,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,14 +48,17 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -112,7 +120,7 @@ fun HeroPanel(
             // The redundant „Radijas" eyebrow was removed to buy the status line its size (it is
             // the copy an elderly user has to read to fix a silent radio), and the later children
             // of a Column are the ones a short hero would squeeze to nothing.
-            .padding(horizontal = 44.dp, vertical = 20.dp)
+            .padding(horizontal = 44.dp, vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -124,6 +132,7 @@ fun HeroPanel(
                 TrackTitleLine(trackTitle)
                 Spacer(Modifier.height(2.dp))
                 StatusLine(status)
+                Spacer(Modifier.height(24.dp))
                 ScreenOffControl(onScreenOff, onNavigateDown)
             }
             // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
@@ -243,22 +252,12 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(Modifier.width(12.dp))
-            Canvas(Modifier.size(20.dp)) {
-                val stroke = 2.dp.toPx()
-                drawRoundRect(
-                    color = colors.primary,
-                    topLeft = Offset(size.width * 0.08f, size.height * 0.20f),
-                    size = Size(size.width * 0.84f, size.height * 0.5f),
-                    cornerRadius = CornerRadius(2.dp.toPx()),
-                    style = Stroke(width = stroke)
-                )
-                drawLine(
-                    color = colors.primary,
-                    start = Offset(size.width * 0.18f, size.height * 0.86f),
-                    end = Offset(size.width * 0.82f, size.height * 0.12f),
-                    strokeWidth = stroke
-                )
-            }
+            Image(
+                painter = painterResource(R.drawable.ic_screen_dark),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(colors.primary),
+                modifier = Modifier.size(24.dp)
+            )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.screen_off_button),
@@ -323,22 +322,59 @@ private fun StationName(name: String) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TrackTitleLine(trackTitle: String?) {
     // A fixed-height block that is composed in both cases: the empty state reserves exactly the
     // same 44 dp, so the station name and status line never move when a title arrives.
-    Box(
-        modifier = Modifier.height(44.dp),
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth().height(44.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Text(
-            text = trackTitle.orEmpty(),
-            modifier = Modifier.testTag("hero-track-title"),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        val style = MaterialTheme.typography.headlineSmall
+        val measurer = rememberTextMeasurer()
+        val title = trackTitle.orEmpty()
+        val textWidth = measurer.measure(
+            text = AnnotatedString(title), style = style, maxLines = 1, softWrap = false
+        ).size.width
+        val overflows = textWidth > constraints.maxWidth
+        // Mask only the text layer, not the station-tinted background behind it.
+        val fade = if (overflows) Modifier
+            .testTag("hero-track-fade")
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                drawContent()
+                val edge = minOf(20.dp.toPx(), size.width / 2f)
+                if (edge > 0f) {
+                    drawRect(
+                        brush = Brush.horizontalGradient(listOf(Color.Transparent, Color.Black), endX = edge),
+                        size = Size(edge, size.height), blendMode = BlendMode.DstIn
+                    )
+                    drawRect(
+                        brush = Brush.horizontalGradient(listOf(Color.Black, Color.Transparent), startX = size.width - edge, endX = size.width),
+                        topLeft = Offset(size.width - edge, 0f),
+                        size = Size(edge, size.height), blendMode = BlendMode.DstIn
+                    )
+                }
+            } else Modifier
+        Box(modifier = fade) {
+            key(trackTitle) {
+                Text(
+                    text = title,
+                    modifier = Modifier.testTag("hero-track-title").basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        initialDelayMillis = 2_000,
+                        repeatDelayMillis = 2_000,
+                        spacing = MarqueeSpacing(48.dp),
+                        velocity = 25.dp
+                    ).then(if (overflows) Modifier.padding(horizontal = 20.dp) else Modifier),
+                    style = style,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
     }
 }
 
