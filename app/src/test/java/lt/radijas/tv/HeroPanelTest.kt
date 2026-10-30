@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
@@ -57,7 +58,7 @@ class HeroPanelTest {
             }
         }
 
-        val leftEdges = PlayerStatus.entries.associateWith { candidate ->
+        val leftEdges = PlayerStatus.entries.filter { it != PlayerStatus.PLAYING }.associateWith { candidate ->
             composeTestRule.runOnUiThread { status = candidate }
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithTag("hero-status").getUnclippedBoundsInRoot().left
@@ -89,7 +90,11 @@ class HeroPanelTest {
         assertEquals("the logo keeps the full slot width", 168f, (logo.right - logo.left).value, 0.5f)
         assertTrue("the wide mark is shorter than the slot", (logo.bottom - logo.top).value < 168f)
         assertTrue("the control stays inside the hero", button.bottom.value <= 242f)
-        assertTrue("the control is a small inline target", button.right.value - button.left.value <= 48f)
+        assertTrue("the control has room for a visible label", button.right.value - button.left.value > 48f)
+        composeTestRule.onNodeWithText("Patamsinti ekraną").assertExists()
+        composeTestRule.onNodeWithTag("hero-status").assertDoesNotExist()
+        val equalizer = composeTestRule.onNodeWithTag("hero-equalizer").getUnclippedBoundsInRoot()
+        assertTrue("the equalizer is larger than the old indicator", (equalizer.right - equalizer.left).value > 18f)
     }
 
     @Test

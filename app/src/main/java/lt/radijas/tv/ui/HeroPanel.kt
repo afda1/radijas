@@ -76,10 +76,7 @@ import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.player.AudioLevelState
 
 /**
- * Display-only "now playing" hero.
- *
- * Deliberately has no `clickable`, `focusable` or `onKeyEvent` modifier: the shelf below is the
- * screen's only focus zone, so the D-pad can never strand focus on the hero.
+ * Now-playing information and the screen-darkening control.
  *
  * The status line is the honest part: it says what the player is actually doing, including the
  * states where nothing is audible. The track-title line above it is the station's own metadata,
@@ -126,7 +123,8 @@ fun HeroPanel(
                 Spacer(Modifier.height(2.dp))
                 TrackTitleLine(trackTitle)
                 Spacer(Modifier.height(2.dp))
-                StatusLine(status, onScreenOff, onNavigateDown)
+                StatusLine(status)
+                ScreenOffControl(onScreenOff, onNavigateDown)
             }
             // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
             val heroPainter = painterResource(station.iconResId)
@@ -190,8 +188,7 @@ private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier
 }
 
 /**
- * The screen-off control, in the status row: a small TV-with-a-slash icon at the end of the line.
- * Its label appears only while it is focused, so the screen never carries a permanent button.
+ * The screen-darkening control has a permanent label and a visible D-pad focus ring.
  */
 @Composable
 private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
@@ -199,18 +196,9 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
     val actionLabel = stringResource(R.string.screen_off_action)
     var isFocused by remember { mutableStateOf(false) }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        if (isFocused) {
-            Text(
-                text = stringResource(R.string.screen_off_button),
-                style = MaterialTheme.typography.labelLarge,
-                color = colors.onSurface.copy(alpha = 0.84f)
-            )
-            Spacer(Modifier.width(8.dp))
-        }
-        Box(
+    Row(
             modifier = Modifier
-                .size(40.dp)
+                .heightIn(min = 44.dp)
                 .testTag("screen-off-button")
                 .onFocusChanged { isFocused = it.isFocused }
                 .focusable()
@@ -242,8 +230,7 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                     }
                 }
                 .clip(MaterialTheme.shapes.small)
-                // Idle: a quiet glyph over the hero, no pill to float. Focused: a pill so the
-                // label and the ring have something to sit on.
+                // Keep the control quiet until focused, then show its background and border.
                 .background(
                     if (isFocused) lerp(colors.surfaceVariant, colors.primary, ControlTint)
                     else Color.Transparent
@@ -253,8 +240,9 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                     color = if (isFocused) colors.border else Color.Transparent,
                     shape = MaterialTheme.shapes.small
                 ),
-            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Spacer(Modifier.width(12.dp))
             Canvas(Modifier.size(20.dp)) {
                 val stroke = 2.dp.toPx()
                 drawRoundRect(
@@ -271,8 +259,14 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                     strokeWidth = stroke
                 )
             }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.screen_off_button),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurface
+            )
+            Spacer(Modifier.width(12.dp))
         }
-    }
 }
 
 /** Largest hero-name size; comes from the theme's displayLarge. */
@@ -349,26 +343,14 @@ private fun TrackTitleLine(trackTitle: String?) {
 }
 
 @Composable
-private fun StatusLine(
-    status: PlayerStatus,
-    onScreenOff: () -> Unit,
-    onNavigateDown: () -> Unit
-) {
+private fun StatusLine(status: PlayerStatus) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        // Copy and equalizer keep the hero's text edge; the screen-off control is pinned to the
-        // right end of the column so it never shifts as the status copy changes length.
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // The theme's 28 sp semibold: this is the line an elderly user has to read to fix a
-            // silent radio ("Nepavyksta prisijungti. Paspausk OK."), so it is the one line that
-            // must not be caption-sized. It ellipsises only when the control is focused, the one
-            // moment the label needs the room.
-            Text(
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Keep instructions readable when playback is not active.
+            if (status != PlayerStatus.PLAYING) Text(
                 text = stringResource(status.textRes()),
                 modifier = Modifier.testTag("hero-status"),
                 style = MaterialTheme.typography.titleMedium,
@@ -376,11 +358,8 @@ private fun StatusLine(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.width(10.dp))
-            EqualizerBars(active = status == PlayerStatus.PLAYING)
+            if (status == PlayerStatus.PLAYING) EqualizerBars(active = true)
         }
-        Spacer(Modifier.width(16.dp))
-        ScreenOffControl(onScreenOff, onNavigateDown)
     }
 }
 
@@ -400,13 +379,13 @@ private fun EqualizerBars(active: Boolean) {
     val third by animateFloatAsState(targets[2], tween(100), label = "level-3")
     // Read outside the draw lambda: a Canvas draw scope is not a composable context.
     val barColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-    Canvas(Modifier.size(18.dp, 18.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
+    Canvas(Modifier.size(44.dp, 32.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
         listOf(first, second, third).forEachIndexed { index, level ->
             val barHeight = 3.dp.toPx() + (size.height - 3.dp.toPx()) * level
             drawRoundRect(
                 color = barColor,
-                topLeft = Offset(index * 7.dp.toPx(), size.height - barHeight),
-                size = Size(4.dp.toPx(), barHeight), cornerRadius = CornerRadius(2.dp.toPx())
+                topLeft = Offset(index * 15.dp.toPx(), size.height - barHeight),
+                size = Size(10.dp.toPx(), barHeight), cornerRadius = CornerRadius(5.dp.toPx())
             )
         }
     }

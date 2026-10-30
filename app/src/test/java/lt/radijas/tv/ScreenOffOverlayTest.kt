@@ -23,7 +23,7 @@ class ScreenOffOverlayTest {
         }
 
         composeTestRule.onNodeWithTag("screen-off-overlay").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Ekranas išjungtas. Paspausk bet kurį mygtuką.")
+        composeTestRule.onNodeWithText("Ekranas patamsintas. Paspausk bet kurį mygtuką.")
             .assertIsDisplayed()
     }
 
@@ -34,7 +34,7 @@ class ScreenOffOverlayTest {
         }
 
         composeTestRule.onNodeWithTag("screen-off-overlay").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Ekranas išjungtas. Paspausk bet kurį mygtuką.")
+        composeTestRule.onNodeWithText("Ekranas patamsintas. Paspausk bet kurį mygtuką.")
             .assertDoesNotExist()
     }
 }

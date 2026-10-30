@@ -10,11 +10,13 @@ Lietuviškas radijas tavo Android TV: vienas ekranas, 11 stočių ir jokio meniu
 
 </div>
 
-<img src="docs/screenshots/2026-10-30/13-m3-lietus.png" alt="Radijas televizoriaus ekrane: groja Lietus, apačioje matoma stočių lentyna" width="100%">
+<img src="docs/screenshots/current/lietus.png" alt="Radijas Android TV ekrane: groja Lietus, apačioje matoma stočių lentyna" width="100%">
 
-| Android TV emuliatoriuje | Realiame televizoriuje |
+| Gold FM | Pasirinktas ekrano patamsinimo mygtukas |
 |---|---|
-| <img src="docs/screenshots/2026-10-30/15-m3-zip-fm.png" alt="ZIP FM groja Android TV emuliatoriuje" width="100%"> | <img src="docs/screenshots/2026-10-30/19-real-tv-ui.png" alt="European Hit Radio groja realiame televizoriuje" width="100%"> |
+| <img src="docs/screenshots/current/gold-fm.png" alt="Gold FM groja Android TV emuliatoriuje" width="100%"> | <img src="docs/screenshots/current/screen-control.png" alt="Pultu pasirinktas mygtukas Patamsinti ekraną" width="100%"> |
+
+Ekrano nuotraukos padarytos Android TV emuliatoriuje.
 
 ## Kam tai skirta?
 

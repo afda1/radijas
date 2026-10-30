@@ -21,7 +21,7 @@
     <string name="station_select">Rinktis stotį</string>
 
     <!-- Screen-off control: a black frame that keeps the audio playing. -->
-    <string name="screen_off_button">Ekranas</string>
-    <string name="screen_off_hint">Ekranas išjungtas. Paspausk bet kurį mygtuką.</string>
-    <string name="screen_off_action">Išjungti ekraną</string>
+    <string name="screen_off_button">Patamsinti ekraną</string>
+    <string name="screen_off_hint">Ekranas patamsintas. Paspausk bet kurį mygtuką.</string>
+    <string name="screen_off_action">Patamsinti ekraną</string>
 </resources>
