@@ -59,8 +59,26 @@ class PlayerStatusTest {
         assertEquals(PAUSED, playerStatus(PlayerState.Paused, false, 0, reconnecting = true))
 
     @Test
-    fun `idle is CONNECTING`() =
+    fun `idle while still trying is CONNECTING`() =
         assertEquals(CONNECTING, playerStatus(PlayerState.Idle, true, 0, reconnecting = false))
+
+    /**
+     * After a deliberate stop (the notification's „Stabdyti", or a leave-and-return flow that
+     * stopped playback) the player is idle with no intent to play. Nothing is trying to connect,
+     * so the hero must not say „Jungiamasi…" forever - it offers the OK recovery instead.
+     */
+    @Test
+    fun `idle after a stop is PAUSED`() =
+        assertEquals(PAUSED, playerStatus(PlayerState.Idle, false, 0, reconnecting = false))
+
+    /**
+     * Transient audio-focus suppression: ExoPlayer keeps `playWhenReady` true while it silences
+     * playback, so `playWhenReady` alone must not keep the hero on „Gyvai" (or, here, on
+     * „Bandau vėl…"). Not audible means Paused, whatever the intent flag says.
+     */
+    @Test
+    fun `suppressed playback is PAUSED although playWhenReady is true`() =
+        assertEquals(PAUSED, playerStatus(PlayerState.Paused, true, 5_000, reconnecting = true))
 
     @Test
     fun `playing wins over long silence`() =

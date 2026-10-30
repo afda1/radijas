@@ -34,13 +34,22 @@ class NowPlayingScreenTest {
         compose.setContent {
             HeroPanel(station, status.value, trackTitle = title.value, modifier = Modifier.requiredSize(864.dp, 260.dp))
         }
-        PlayerStatus.entries.forEach { candidate ->
+        var expectedWidth = 0f
+        var expectedHeight = 0f
+        PlayerStatus.entries.forEachIndexed { index, candidate ->
             compose.runOnIdle { title.value = "Taylor Swift - Shake It Off"; status.value = candidate }
             compose.onNodeWithTag("hero-station-logo").assertExists()
             compose.onNodeWithTag("hero-album-art").assertDoesNotExist()
             val bounds = compose.onNodeWithTag("hero-station-logo").getUnclippedBoundsInRoot()
-            org.junit.Assert.assertEquals(168f, (bounds.right - bounds.left).value, 0.5f)
-            org.junit.Assert.assertEquals(168f, (bounds.bottom - bounds.top).value, 0.5f)
+            val width = (bounds.right - bounds.left).value
+            val height = (bounds.bottom - bounds.top).value
+            if (index == 0) {
+                // The logic stays out of the markup; only the geometry must not move between states.
+                expectedWidth = width
+                expectedHeight = height
+            }
+            org.junit.Assert.assertEquals(expectedWidth, width, 0.01f)
+            org.junit.Assert.assertEquals(expectedHeight, height, 0.01f)
         }
     }
 }

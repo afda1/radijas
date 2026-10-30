@@ -22,11 +22,15 @@ const val NO_CONNECTION_AFTER_MS = 30_000L
  *
  * Order matters:
  * 1. Playing is playing, even if the silence counter has not been reset yet.
- * 2. Paused without intent to play means something else took the audio focus.
- * 3. Silence past the threshold is a failure the retry loop has not fixed yet.
- * 4. Below the threshold, only a stream that has already played counts as a reconnection. A first
+ * 2. A paused player is not audible, so it is reported as paused - whatever `playWhenReady` says.
+ *    ExoPlayer keeps the intent to play while it suppresses audio for a transient audio-focus
+ *    loss, and the hero must not keep saying „Gyvai" over a silent set.
+ * 3. An idle player that is not trying to play was stopped on purpose; calling that silence a
+ *    connection attempt would leave „Jungiamasi…" on screen forever with nothing connecting.
+ * 4. Silence past the threshold is a failure the retry loop has not fixed yet.
+ * 5. Below the threshold, only a stream that has already played counts as a reconnection. A first
  *    connection may buffer for a while, but it is still connecting, not "trying again".
- * 5. A player error below the threshold is not a final failure: the service keeps retrying, so
+ * 6. A player error below the threshold is not a final failure: the service keeps retrying, so
  *    the hero must not blink to the failure copy on every attempt (spec 6.2: the failure copy
  *    appears after ~30 s of failure).
  */
@@ -37,7 +41,8 @@ fun playerStatus(
     reconnecting: Boolean
 ): PlayerStatus = when {
     playerState is PlayerState.Playing -> PlayerStatus.PLAYING
-    playerState is PlayerState.Paused && !playWhenReady -> PlayerStatus.PAUSED
+    playerState is PlayerState.Paused -> PlayerStatus.PAUSED
+    playerState is PlayerState.Idle && !playWhenReady -> PlayerStatus.PAUSED
     silentForMs >= NO_CONNECTION_AFTER_MS -> PlayerStatus.NO_CONNECTION
     playerState is PlayerState.Error && reconnecting -> PlayerStatus.RECONNECTING
     silentForMs > 0 && reconnecting -> PlayerStatus.RECONNECTING

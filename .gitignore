@@ -24,3 +24,6 @@ Thumbs.db
 # Local scratch
 *.log
 .superpowers/
+
+# Dev tooling (tools/palette): the generator is committed, its npm deps are not
+tools/palette/node_modules/

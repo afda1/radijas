@@ -5,10 +5,17 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.model.RadioStation
@@ -147,5 +154,41 @@ class StationShelfTest {
 
         assertEquals("only the initial reveal may scroll", revealedIndex, listState.firstVisibleItemIndex)
         composeTestRule.onNodeWithTag("station-tile-rc").assertIsFocused()
+    }
+
+    /**
+     * A tile is a button. Without a click action an accessibility service can focus it but never
+     * press it, which would make the whole app unusable for a low-vision user: the screen has no
+     * other control.
+     */
+    @Test
+    fun `tile is a button that assistive tech can activate`() {
+        var selected: String? = null
+        composeTestRule.setContent {
+            StationShelf(stations, playingId = "m1", onSelect = { selected = it.id })
+        }
+        val tile = composeTestRule.onNodeWithTag("station-tile-m1")
+
+        tile.assertHasClickAction()
+        tile.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+
+        tile.performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals("m1", selected)
+    }
+
+    /** The tile that is playing says so; the other ten do not. */
+    @Test
+    fun `only the playing tile announces that it is playing`() {
+        val playingLabel =
+            ApplicationProvider.getApplicationContext<Context>().getString(R.string.station_playing)
+        // The first station, so the row does not scroll and both compared tiles are composed.
+        composeTestRule.setContent {
+            StationShelf(stations, playingId = "ehr", onSelect = {})
+        }
+
+        composeTestRule.onNodeWithTag("station-tile-ehr")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, playingLabel))
+        composeTestRule.onNodeWithTag("station-tile-goldfm")
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.StateDescription))
     }
 }

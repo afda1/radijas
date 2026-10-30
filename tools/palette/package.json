@@ -1,0 +1,9 @@
+{
+  "name": "radijas-palette",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only: regenerates StationPalette.kt from the station brand colours.",
+  "dependencies": {
+    "@material/material-color-utilities": "0.4.0"
+  }
+}

@@ -20,11 +20,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -34,20 +39,31 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import lt.radijas.tv.R
 import lt.radijas.tv.data.model.RadioStation
-import lt.radijas.tv.ui.theme.RadijasContent
-import lt.radijas.tv.ui.theme.onBrand
-import lt.radijas.tv.ui.theme.tonalSurface
+import lt.radijas.tv.ui.theme.logoAspect
+import lt.radijas.tv.ui.theme.stationLogoWidthFraction
+import lt.radijas.tv.ui.theme.stationScheme
 
 /**
  * One station in the shelf. This is the only focusable element on the screen: the brand-tinted
  * ring marks where the D-pad is, and OK on it selects the station.
+ *
+ * It is also an accessibility button: the screen has no other control, so a tile that assistive
+ * technology cannot press would make the app unusable for a low-vision user. The playing tile
+ * says „Groja" (state) and carries a small brand bar, so the listening station is identifiable
+ * even after focus has moved away from it.
  */
 @Composable
 fun StationTile(
@@ -55,17 +71,18 @@ fun StationTile(
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester = remember { FocusRequester() },
     onSelect: () -> Unit = {},
+    isPlaying: Boolean = false,
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    // Derived colours are remembered: the shelf recomposes on every status tick, and each
-    // tonalSurface/onBrand call is a real computation, not a field read.
-    val background = remember(station.brandColor, isFocused) {
-        tonalSurface(station.brandColor, if (isFocused) 0.34f else 0.15f)
-    }
-    val accent = remember(station.brandColor) { onBrand(station.brandColor) }
-    val labelColor = remember(station.brandColor, isFocused) {
-        if (isFocused) accent else RadijasContent.copy(alpha = 0.72f)
-    }
+    // Each tile paints from its OWN station palette, not from the playing station's theme: the
+    // carousel is where stations are told apart, so every tile carries its own container colour
+    // before anything is selected. Focus is the ring and the 6 % scale; the fill does not change.
+    val colors = remember(station.id) { stationScheme(station.id) }
+    val background = colors.primaryContainer
+    val accent = colors.border
+    val labelColor = colors.onPrimaryContainer
+    val playingLabel = stringResource(R.string.station_playing)
+    val selectLabel = stringResource(R.string.station_select)
 
     Column(
         modifier = modifier
@@ -75,6 +92,17 @@ fun StationTile(
                 isFocused = focusState.isFocused
             }
             .focusable()
+            // Accessibility action, not a click modifier: the raw D-pad key handling below is
+            // invisible to an accessibility service, so without this a TalkBack user could focus
+            // a station but never start it.
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                if (isPlaying) stateDescription = playingLabel
+                onClick(label = selectLabel) {
+                    onSelect()
+                    true
+                }
+            }
             .onKeyEvent { event ->
                 // Only the first KeyDown: a held OK repeats KeyDown and must not queue a
                 // second start/retry behind the first one.
@@ -97,18 +125,37 @@ fun StationTile(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(28.dp))
+            .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
+            // Drawn inside the existing 10 dp padding, i.e. without changing the tile's height:
+            // a bar that shifted the shelf would move the hero's already tight vertical budget.
+            .drawWithContent {
+                drawContent()
+                if (isPlaying) {
+                    val barHeight = 3.dp.toPx()
+                    drawRoundRect(
+                        color = accent,
+                        topLeft = Offset((size.width - 48.dp.toPx()) / 2f, size.height - 7.dp.toPx()),
+                        size = Size(48.dp.toPx(), barHeight),
+                        cornerRadius = CornerRadius(barHeight / 2f)
+                    )
+                }
+            }
             .border(
                 width = 3.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused
                 // surface: a white ring would be the plainest thing on a screen about colour.
                 color = if (isFocused) accent else Color.Transparent,
-                shape = RoundedCornerShape(28.dp)
+                shape = MaterialTheme.shapes.extraLarge
             )
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Drawn at its optically normalised width, not fitted to the box: stationLogoWidthFraction
+        // keeps dense compact marks from outweighing the wide wordmarks.
+        val painter = painterResource(station.iconResId)
+        val aspect = remember(painter) { logoAspect(painter) }
+        val logoWidth = 156.dp * (stationLogoWidthFraction[station.id] ?: 1f)
         Box(
             modifier = Modifier
                 .size(156.dp)
@@ -116,23 +163,17 @@ fun StationTile(
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(station.iconResId),
+                painter = painter,
                 contentDescription = null,
-                // Every station asset is a white silhouette on transparency, already trimmed to
-                // its mark with a 6 % breathing margin, so Fit fills the square without cropping
-                // a wide mark and the brand only ever comes from the surface around it.
                 contentScale = ContentScale.Fit,
                 colorFilter = ColorFilter.tint(Color.White),
-                modifier = Modifier.size(156.dp)
+                modifier = Modifier.size(width = logoWidth, height = logoWidth / aspect)
             )
         }
         Spacer(Modifier.height(10.dp))
         Text(
             text = station.name,
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontSize = 16.sp,
-                lineHeight = 22.sp
-            ),
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = if (isFocused) FontWeight.SemiBold else FontWeight.Normal,
             color = labelColor,
             maxLines = 1,

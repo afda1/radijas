@@ -100,17 +100,17 @@ class RadioPlayerManager(private val context: Context) {
     }
 
     private fun deriveState(p: Player): PlayerState {
+        // The error message is a string resource, so it is resolved here; everything else is the
+        // pure mapping, which is unit-tested without a Player.
         p.playerError?.let { return PlayerState.Error(errorMessage(it)) }
-        return when (p.playbackState) {
-            Player.STATE_READY -> if (p.playWhenReady) PlayerState.Playing else PlayerState.Paused
-            Player.STATE_BUFFERING, Player.STATE_ENDED ->
-                if (p.playWhenReady) PlayerState.Connecting else PlayerState.Paused
-            else -> when {
-                p.mediaItemCount == 0 -> PlayerState.Idle
-                p.playWhenReady -> PlayerState.Connecting
-                else -> PlayerState.Paused
-            }
-        }
+        return derivePlayerState(
+            playbackState = p.playbackState,
+            playWhenReady = p.playWhenReady,
+            // Audible, not "intends to play": ExoPlayer keeps playWhenReady true while it
+            // suppresses audio for a transient focus loss, and the hero must not say „Gyvai".
+            isPlaying = p.isPlaying,
+            mediaItemCount = p.mediaItemCount
+        )
     }
 
     private fun errorMessage(error: PlaybackException): String = context.getString(

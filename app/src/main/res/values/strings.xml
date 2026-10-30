@@ -14,4 +14,14 @@
     <!-- Media notification. The only control is stopping playback; there is no pause anywhere. -->
     <string name="notification_channel_name">Grojimas</string>
     <string name="notification_stop">Stabdyti</string>
+
+    <!-- Station tile accessibility: announced for the tile that is playing, and the label of the
+         activate action. The tile's own visible name provides the station name to TalkBack. -->
+    <string name="station_playing">Groja</string>
+    <string name="station_select">Rinktis stotį</string>
+
+    <!-- Screen-off control: a black frame that keeps the audio playing. -->
+    <string name="screen_off_button">Ekranas</string>
+    <string name="screen_off_hint">Ekranas išjungtas. Paspausk bet kurį mygtuką.</string>
+    <string name="screen_off_action">Išjungti ekraną</string>
 </resources>

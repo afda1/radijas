@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import lt.radijas.tv.data.model.RadioStation
-import lt.radijas.tv.ui.theme.RadijasBackground
+import androidx.tv.material3.MaterialTheme
 
 /**
  * The TV home screen: hero on top, focusable station shelf below.
@@ -23,12 +23,13 @@ import lt.radijas.tv.ui.theme.RadijasBackground
 fun NowPlayingScreen(
     uiState: NowPlayingUiState,
     stations: List<RadioStation>,
-    onSelect: (RadioStation) -> Unit
+    onSelect: (RadioStation) -> Unit,
+    onScreenOff: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(RadijasBackground)
+            .background(MaterialTheme.colorScheme.background)
             // Vertical overscan safety. The shelf itself extends to the physical screen edges.
             .padding(vertical = 27.dp)
     ) {
@@ -36,6 +37,7 @@ fun NowPlayingScreen(
             station = uiState.station,
             status = uiState.status,
             trackTitle = uiState.trackTitle,
+            onScreenOff = onScreenOff,
             modifier = Modifier
                 .padding(horizontal = 48.dp)
                 .weight(1f)

@@ -21,7 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import lt.radijas.tv.ui.theme.RadijasBackground
+import androidx.tv.material3.MaterialTheme
 import androidx.compose.ui.unit.dp
 import lt.radijas.tv.data.model.RadioStation
 
@@ -75,6 +75,7 @@ fun StationShelf(
         hasRevealed = true
     }
 
+    val pageBackground = MaterialTheme.colorScheme.background
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth().drawWithContent {
@@ -82,11 +83,11 @@ fun StationShelf(
             // Fade only at physical edges, never over the safe-area focused card.
             val edge = 28.dp.toPx()
             if (listState.canScrollBackward) drawRect(
-                brush = Brush.horizontalGradient(listOf(RadijasBackground, Color.Transparent), endX = edge),
+                brush = Brush.horizontalGradient(listOf(pageBackground, Color.Transparent), endX = edge),
                 size = Size(edge, size.height)
             )
             if (listState.canScrollForward) drawRect(
-                brush = Brush.horizontalGradient(listOf(Color.Transparent, RadijasBackground), startX = size.width - edge, endX = size.width),
+                brush = Brush.horizontalGradient(listOf(Color.Transparent, pageBackground), startX = size.width - edge, endX = size.width),
                 topLeft = Offset(size.width - edge, 0f), size = Size(edge, size.height)
             )
         },
@@ -103,7 +104,9 @@ fun StationShelf(
             StationTile(
                 station = station,
                 focusRequester = focusRequesters.getValue(station.id),
-                onSelect = select
+                onSelect = select,
+                // The playing tile stays marked after focus moves away from it.
+                isPlaying = station.id == playingId
             )
         }
     }
