@@ -14,3 +14,13 @@ The derived parts are the playback engine: the Media3 session service, the
 playback manager, the reconnect logic and the station catalogue. The television
 interface, design system, focus model, artwork and tests were written for this
 project.
+
+Trademarks
+
+The station names and logos shown by this application are the trademarks of
+their respective broadcasters: Lietus, ZIP FM, Power Hit Radio, Power Hit Radio
+Gold, Rock FM, Relax FM, M-1, M-1 Plius, Gold FM, Radiocentras and European Hit
+Radio. They are included only to identify the station being played, are not
+covered by this project's GPL-3.0 license, and imply no endorsement by the
+broadcasters. The program is an unofficial receiver and is not affiliated with
+any of them.

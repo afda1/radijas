@@ -279,3 +279,68 @@ Jokioje būsenoje ekranas neturi mažiau elementų nei `Playing` — niekas neš
 - Prie „Gyvai“ leidžiami trys maži tikro PCM garso lygio brūkšneliai. Jie nekeičia
   maketo, nenaudoja mikrofono, neįrašo ir nesiunčia garso. Ne dažnių spektro grafikas.
 - Vienas ekranas, keturi pulto mygtukai, jokių papildomų pasirinkimų ar registracijos.
+
+## 12. 2026-10-30 re-baseline (autoritetingos reikšmės)
+
+Ši dalis fiksuoja, ką kodas daro **dabar**; ankstesnės dalys lieka istorinės. Patikrinta 2026-10-30 17:39 pagal išeities kodą ir `app/build/test-results/testDebugUnitTest/`. Kur ankstesnė dalis prieštarauja šiai, galioja ši.
+
+### 12.1 Stotys ir spalvos
+
+Šaltinis: `app/src/main/java/lt/radijas/tv/data/repository/RadioRepository.kt:12-93`.
+
+| id | Stotis | `brandColor` |
+|---|---|---|
+| `zip` | ZIP FM | `#1717E8` |
+| `powerhit` | Power Hit Radio | `#ED1C24` |
+| `powerhitgold` | Power Hit Radio Gold | `#C9A13D` |
+| `rock` | Rock FM | `#D72828` |
+| `relax` | Relax FM | `#7C4DB3` |
+| `lietus` | Lietus | `#009A61` |
+| `m1` | M-1 | `#1638C6` |
+| `plus` | M-1 Plius | `#C92636` |
+| `goldfm` | Gold FM | `#C9A13A` |
+| `rc` | Radiocentras | `#F05A28` |
+| `ehr` | European Hit Radio | `#E20E18` |
+
+`RadioRepository.kt:93` rikiuoja `stations` pagal pavadinimą (`sortedBy { it.name.lowercase(Locale.ROOT) }`), todėl rodoma tvarka A–Z yra: `ehr`, `goldfm`, `lietus`, `m1`, `plus`, `powerhit`, `powerhitgold`, `rc`, `relax`, `rock`, `zip`.
+
+**§6.5 lentelė (113–125 eil.) pasenusi**: jos spalvos neatitinka nė vienos stoties (pvz., joje Lietus `#0E8FD1`, kode — `#009A61`; ZIP FM `#FF5A1F`, kode — `#1717E8`).
+
+### 12.2 Hero
+
+Šaltinis: `app/src/main/java/lt/radijas/tv/ui/HeroPanel.kt`.
+
+- Stoties pavadinimas: didžiausias **96 sp**, mažinamas po 4 sp iki **48 sp** grindų, viena eilė (`HeroPanel.kt:160,163,199-211`). §6.4 (~78 sp) nebegalioja.
+- Pavadinimo juosta `heightIn(min = 113.dp)`, kad ilgas vardas nejudintų žemesnių eilučių (`HeroPanel.kt:193`).
+- „Kas groja": **26 sp**, 66 % baltos, fiksuotas 44 dp blokas (`HeroPanel.kt:224-241`).
+- Būsena: **24 sp**, `lineHeight = 30.sp`, `SemiBold` (`HeroPanel.kt:254-269`); anksčiau buvo 16 sp. Būsenos tekstas eina pirma, ekvalaizerio brūkšneliai — **po jo** (`HeroPanel.kt:270-271`); brūkšneliai komponuojami visose būsenose ir tampa permatomi, kai negroja.
+- Hero viršuje **nebėra „Radijas" užrašo** — `Column` prasideda stoties pavadinimu (`HeroPanel.kt:100-115`).
+- Hero vidinė paraštė 44 dp horizontaliai / 20 dp vertikaliai (`HeroPanel.kt:103`), logotipas 168 dp (`HeroPanel.kt:124`).
+
+### 12.3 Lentyna, plytelė ir accessibility
+
+Šaltiniai: `ui/StationShelf.kt`, `ui/StationTile.kt`.
+
+- Plytelės plotis 176 dp, logotipas 156 dp, pavadinimas **16 sp** / 22 sp eilutės aukštis, svoris `Normal` (fokusuota — `SemiBold`) (`StationTile.kt:98,165,177,181-191`).
+- Fokusavimas **ne centruojamas**: `StationShelf.kt:64-76` vieną kartą paslenka sąrašą `scrollToItem(revealIndex)` (plytelė atsiduria pradžioje), o vėliau sąrašas nebejudinamas. §6.5 (129 eil.) teiginys „Fokusas centruojamas, kai įmanoma…" prieštarauja kodui ir nebegalioja.
+- Accessibility: plytelė — `Role.Button` su `onClick` veiksmu „Rinktis stotį"; grojanti plytelė turi `stateDescription = "Groja"` ir atskirą 48×3 dp ženklą (`StationTile.kt:107-114,141-152`; `app/src/main/res/values/strings.xml:20-21`). `StationShelf.kt:108` perduoda `isPlaying`.
+- `ui/Focus.kt`, nurodytas §7.3 (188 eil.), **neegzistuoja**; fokuso rėmelis piešiamas tiesiai plytelėje (`StationTile.kt:153-159`).
+
+### 12.4 Leidimai
+
+Šaltinis: `app/src/main/AndroidManifest.xml`.
+
+- `ACCESS_NETWORK_STATE` **yra** (`AndroidManifest.xml:3`), taip pat `WAKE_LOCK`, `FOREGROUND_SERVICE` ir `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (`:4-6`). §8 (243 eil.) teiginys, kad yra tik `INTERNET`, klysta.
+
+### 12.5 Būsenos (2026-10-30 pataisymai)
+
+- „Gyvai" sprendžiama pagal girdimumą (`isPlaying`), ne pagal `playWhenReady`: `player/PlayerStateMapping.kt:20-36`, kviečiama iš `player/RadioPlayerManager.kt:102-113`.
+- OK ant grojančios plytelės — **nieko** (`StationAction.IGNORE`); ant nepavykusios ar pristabdytos — `RETRY`; ant kitos stoties — `SELECT` (`StationSelection.kt:30-38`, kviečiama `MainActivity.kt:65-77`).
+- Sustabdytas grotuvas (`Idle` be ketinimo groti) rodomas „Pristabdyta", o ne „Jungiamasi…" (`ui/PlayerStatus.kt:37-46`).
+- Testai: **96**, 0 klaidų (XML 2026-10-30 17:39). Iš jų `PlayerStateMappingTest` 8, `StationSelectionTest` 6, `PlayerStatusTest` 20, `StationShelfTest` 10.
+
+### 12.6 Dokumentų pastabos
+
+- README „ekranas nešokinėja" galioja **1.0 šrifto masteliui**; didesnis `fontScale` gali padidinti fiksuoto aukščio juostas (`HeroPanel.kt:193`).
+- README testų skaičius dabar **96**, o ne 78 ar 94; istoriniai skaičiai palikti `docs/2026-10-30-radio-update.md` su istorine įžanga.
+- Screenshotai `docs/screenshots/2026-10-30/` daryti prieš šiuos UI pataisymus (juose dar yra „Radijas" užrašas ir mažesnė būsenos eilutė).

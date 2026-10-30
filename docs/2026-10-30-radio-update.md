@@ -1,5 +1,12 @@
 # 2026-10-30 pakeitimų patikra
 
+> **Istorinis įrašas.** Šis dokumentas yra tos dienos darbo žurnalas, o ne dabartinė būsena.
+> Dabartiniai skaičiai: **96 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`,
+> patikra 2026-10-30 17:39), lint **0 klaidų / 31 įspėjimų** (paleidimas 2026-10-30 17:39,
+> po UI ir accessibility pakeitimų), `HEAD bce9d07` jau nupush'intas į `origin/main`.
+> Žemiau esantys „80 testų", `TrackLookupTest` ir viršelių eilutės yra **tarpiniai tos dienos
+> istoriniai įrašai**, o ne dabartinė būsena.
+
 ## Naujausias sprendimas: viršelių atsisakyta
 
 Vartotojo prašymu albumų viršeliai pašalinti visiškai: visada rodomas stoties
@@ -13,7 +20,7 @@ PCM vizualizacija, EHR ir A–Z nepakeisti. Papildomų priklausomybių nebuvo.
 - GREEN: `gradlew.bat testDebugUnitTest assembleDebug lintDebug --console=plain`,
   Java 21 — **BUILD SUCCESSFUL**, 36 s. XML: **78 testai, 0 klaidų**, lint —
   **0 klaidų / 31 įspėjimas**, APK atnaujintas.
-- Iš 80 testų pašalinti 3 nebenaudojamos viršelių funkcijos testai, pridėtas testas,
+- Iš 80 testų (istorinis skaičius) pašalinti 3 nebenaudojamos viršelių funkcijos testai, pridėtas testas,
   kad Power klientas nesikreipia dėl kitų stočių. Du UI testai dabar tikrina, kad
   logotipas lieka matomas ir tokio pat dydžio keičiantis dainai bei visoms būsenoms.
 - Ankstesnis screenshotas su albumo viršeliu pašalintas; README rodo logotipą.
@@ -52,6 +59,10 @@ Jokių naujų ekranų ar valdiklių.
   ne dažnių spektro analizė; garso išvesties buferis gali lemti nedidelį vėlavimą.
 
 ## Testų garantijos
+
+> Pastaba: ši lentelė istorinė. `TrackLookupTest` klasės repozitorijoje nebėra (viršelių
+> kelias pašalintas), o „80 testų" buvo tarpinis skaičius. Dabartiniai 96 testai —
+> `app/src/test/` ir `app/build/test-results/testDebugUnitTest/`.
 
 | Elgsena | Testas | Būsena |
 |---|---|---|
@@ -96,7 +107,7 @@ Jokių naujų ekranų ar valdiklių.
 
 Komanda: `gradlew.bat testDebugUnitTest assembleDebug lintDebug --console=plain`, JDK 21.
 
-- Testų XML: **80 testų, 0 failures, 0 errors**.
+- Testų XML: **80 testų, 0 failures, 0 errors** (istorinis to etapo skaičius; dabartinis — 96, žr. įžangą).
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk` — surinktas.
 - Android Lint: **0 klaidų, 31 įspėjimas**. Daugiausia naujesnės bibliotekų versijos,
   TV manifesto / eksportuoto medijos serviso ir Compose stiliaus rekomendacijos.

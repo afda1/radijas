@@ -4,7 +4,7 @@
 
 Vienas ekranas, vienuolika Lietuvos stočių, jokio meniu. Skirta tiems, kuriems radijas televizoriuje turi įsijungti taip pat paprastai kaip televizijos kanalas.
 
-<img src="docs/screenshots/2026-10-30/06-logo-fallback.png" alt="Lietus groja, rodomas stoties logotipas" width="100%">
+<img src="docs/screenshots/2026-10-30/13-m3-lietus.png" alt="Lietus groja: stoties vardas, dainos eilutė, „Gyvai", M3 plytelės su stoties atspalviu" width="100%">
 
 ## Kam tai skirta
 
@@ -20,7 +20,9 @@ Trečia grupė yra tie, kurie tiesiog nori fono. Radijas per televizorių yra ge
 |---|---|---|
 | <img src="docs/screenshots/2026-10-30/05-ehr-carousel-start.png" alt="EHR, karuselės pradžia" width="330"> | <img src="docs/screenshots/2026-10-30/02-power-hit-radio.png" alt="Power Hit Radio, logotipo atsarga" width="330"> | <img src="docs/screenshots/2026-10-30/04-carousel-end.png" alt="ZIP FM, karuselės pabaiga" width="330"> |
 
-Spalva ateina iš stoties ženklo. Perjungi stotį, persidažo visas ekranas: tamsiai žalia Lietui, raudona Rock FM, oranžinė Radiocentrui. Logotipai yra balti siluetai, kad būtų įskaitomi bet kurioje spalvoje ir iš sofos. Tai ne dekoracija: paletė apskaičiuojama taip, kad tekstas visada turėtų bent 4.5:1 kontrastą, ir tai tikrinama automatiškai visoms vienuolikai stočių.
+*Nuotraukos darytos 2026-10-30 emuliatoriuje. `10`–`18` rodo dabartinę M3 paletę ir ekrano užgesinimą; `07`–`08` — hero pataisymus prieš M3 perkėlimą; `02`–`06` — ankstesnę išvaizdą.*
+
+Spalva ateina iš stoties ženklo, bet dabar ne rankiniu maišymu: iš kiekvienos stoties spalvos HCT algoritmu sugeneruojama visa Material 3 toninė paletė (primary, konteineriai, paviršiai, rėmelis), o visas ekranas dažomas iš tų rolių. Tai ta pati idėja, kurią Android naudoja „Material You" — tik sėkla yra stotis, nes televizorius tapetų neturi. Logotipai yra balti siluetai, kad būtų įskaitomi bet kurioje spalvoje ir iš sofos. Kontrastas tikrinamas automatiškai visoms vienuolikai stočių: tekstas ≥ 4.5:1, fokuso rėmelis ≥ 6:1. Nuotraukos: [dabartinė išvaizda](docs/screenshots/2026-10-30/10-m3-ui.png).
 
 ## Ką daro
 
@@ -32,6 +34,8 @@ Valdymas telpa į keturis pulto mygtukus:
 |---|---|
 | ← → | Rinktis stotį |
 | OK | Groti |
+| ↑, OK | Mygtukas „Ekranas": ekranas pajuosta, garsas groja toliau |
+| bet kuris klavišas | Grąžina ekraną; pirmas paspaudimas neperjungia stoties |
 | Back / Home | Išeiti ir nutildyti |
 | ↑ ↓ | Nieko |
 
@@ -39,7 +43,7 @@ Stotys rikiuojamos A–Z: European Hit Radio, Gold FM, Lietus, M-1, M-1 Plius, P
 
 **Automatinis prisijungimas iš naujo.** Nutrūkus srautui, bandoma po 1, 2, 4, 8, 15 sekundžių, paskui kas 30 sekundžių, be galo. Ekrane rodoma „Bandau vėl…", o po pusės minutės be sėkmės atsiranda „Nepavyksta prisijungti. Paspausk OK.". Bandymai nesiliauja net tada, kai ekrane rodoma klaida, todėl naktį trumpam dingęs Wi-Fi atsigauna pats.
 
-**„Kas groja".** Kai stotis siunčia dainos pavadinimą per ICY metadata, jis parodomas po stoties pavadinimu. Nefiltruojamas ir neapdorojamas: jei stotis siunčia reklamą, bus rodoma reklama. Jei stotis nesiunčia nieko, eilutė lieka tuščia, bet vieta išlieka, kad ekranas nešokinėtų.
+**„Kas groja".** Kai stotis siunčia dainos pavadinimą per ICY metadata, jis parodomas po stoties pavadinimu. Turinys nefiltruojamas ir neperrašinėjamas: jei stotis siunčia reklamą, bus rodoma reklama. Apdorojami tik tarpai — jie kerpami, o trumpesni nei 2 simbolių pavadinimai atmetami, kad vietoje teksto neliktų vienišo simbolio. Jei stotis nesiunčia nieko, eilutė lieka tuščia, bet vieta išlieka, kad ekranas nešokinėtų.
 
 ## Ko sąmoningai nedaro
 
@@ -80,25 +84,27 @@ Paleidžiant, lentyna pasislenka iki stoties, kuri tuoj gros, ir fokusas atsidur
 
 ### Būsenos
 
-Penkios būsenos, kurias žmogus gali pamatyti: „Jungiamasi…", „Gyvai", „Bandau vėl…", „Nepavyksta prisijungti. Paspausk OK." ir „Pristabdyta. Paspausk OK.". Jos apskaičiuojamos gryna funkcija iš grotuvo būsenos, laiko nuo paskutinio grojimo ir `playWhenReady` vėliavos. Funkcija neturi jokių Android priklausomybių, todėl testuojama be emuliatoriaus.
+Penkios būsenos, kurias žmogus gali pamatyti: „Jungiamasi…", „Gyvai", „Bandau vėl…", „Nepavyksta prisijungti. Paspausk OK." ir „Pristabdyta. Paspausk OK.". „Gyvai" rodoma tik tada, kai grotuvas tikrai girdimas (`isPlaying`), o ne tada, kai jis tik ketina groti: perėmus garsą kitai programėlei `playWhenReady` lieka `true`, nors garso nėra. Būsena apskaičiuojama dviem grynomis funkcijomis — pirmoji paverčia grotuvo faktus būsena, antroji prideda laiką nuo paskutinio grojimo. Abi neturi Android priklausomybių, todėl testuojamos be emuliatoriaus.
 
-Būsenos išdėstytos taip, kad ekranas nešokinėtų: eilutė po stoties pavadinimu visada užima tą patį aukštį, o ekvalaizerio brūkšneliai tiesiog tampa permatomi, kai negroja. Skirtingos būsenos nekeičia maketo.
+Būsenos išdėstytos taip, kad ekranas nešokinėtų: eilutė po stoties pavadinimu visada užima tą patį aukštį, o ekvalaizerio brūkšneliai tiesiog tampa permatomi, kai negroja. Skirtingos būsenos nekeičia maketo esant 1.0 šrifto masteliui; didesnis sistemos šriftas gali padidinti fiksuoto aukščio juostas, todėl tokiu atveju išdėstymas gali kisti.
 
 ### Pranešimas ir išorinis valdymas
 
 Pranešime yra stoties pavadinimas, daina ir vienas veiksmas: „Stabdyti". Jokio play, pauzės ar peršokimo.
 
-Tai ne tik kosmetika. `MediaSession.Callback.onConnect` atskiria savo programėlės valdiklį nuo visų kitų. Savas `MediaController` gauna pilną komandų rinkinį, o Google Assistant, sistemos medijos valdymas ir kitos programėlės gauna tik skaitymo komandas. Be to, sistemos `PlaybackState` neturi play ar pauzės vėliavėlių, todėl „paleisk" ar „pauzė" per Assistant tiesiog neveikia.
+Tai ne tik kosmetika. `MediaSession.Callback.onConnect` atskiria savo programėlės valdiklį nuo visų kitų. Savas `MediaController` gauna pilną komandų rinkinį, o Google Assistant, sistemos medijos valdymas ir kitos programėlės gauna tik skaitymo komandas. Be to, sistemos `PlaybackState` neturi play/pauzės veiksmų, todėl „paleisk" ar „pauzė" per Assistant tiesiog neveikia.
 
 ### Testai
 
-`app/src/test/` turi 78 testus, kurie paleidžiami be emuliatoriaus:
+`app/src/test/` turi 99 testus, kurie paleidžiami be emuliatoriaus (patikrinta 2026-10-30 18:25: 99 testai, 0 klaidų):
 
 - fokuso elgsena lentynoje (pradinis fokusas, judėjimas, kraštai, ↑↓ ignoravimas),
-- būsenų skaičiavimas ir perėjimų tvarka,
+- grotuvo faktų pavertimas būsena ir būsenų perėjimų tvarka,
+- OK ant stoties plytelės: grojanti stotis — nieko nedaroma, nepavykusi — iš karto kartojama, kita — persijungiama,
 - paletės kontrastas visoms vienuolikai stočių,
 - dainos pavadinimo apdorojimas,
 - pranešimo veiksmai ir sesijos komandų ribojimas,
+- stoties plytelės accessibility semantika (mygtukas su „Rinktis stotį" veiksmu; grojanti plytelė skelbia „Groja"),
 - paleidimo stotis, sustabdymo taisyklė ir tai, ar grįžus į programėlę srautas turi būti paleistas iš naujo,
 - logotipų failų vientisumas (visi nepermatomi pikseliai balti),
 - A–Z tvarka, Power duomenų šviežumas ir pastovus stoties logotipas keičiantis dainai bei grojimo būsenai,
@@ -113,6 +119,8 @@ app/src/main/java/lt/radijas/tv/
   MainActivity.kt        vienintelis ekranas ir gyvavimo ciklas
   RadijasApp.kt
   StartupStation.kt      kurią stotį groti paleidus
+  ScreenOffPolicy.kt     ekrano užgesinimo klavišų taisyklė
+  StationSelection.kt    ką daro OK ant stoties plytelės
   StopPolicy.kt          kada nutilti
   RelaunchPolicy.kt      ar grįžus į programėlę reikia paleisti srautą iš naujo
   data/                  stotys ir jų saugojimas
@@ -124,7 +132,7 @@ docs/screenshots/        ekrano nuotraukos
 
 ## Sukūrimas iš šaltinio
 
-APK surinkimui pakanka JDK 17; testams su Android 36 / Robolectric reikia **JDK 21**. Rekomenduojama viskam naudoti JDK 21 ir Android SDK su `platforms;android-37.0`.
+Viskam reikia **JDK 21** (Robolectric testams su Android 36 senesnis JDK netinka) ir Android SDK su `platforms;android-37.0`.
 
 ```bash
 git clone https://github.com/afda1/radijas.git
@@ -141,15 +149,32 @@ Testai:
 ./gradlew testDebugUnitTest
 ```
 
+## Įdiegimas
+
+Šiuo metu išleisto APK nėra: programėlė statoma iš šaltinio (žr. aukščiau). Pirmasis APK bus paskelbtas [GitHub Releases](https://github.com/afda1/radijas/releases) puslapyje.
+
+Kai APK bus išleistas, jis įrašomas per `adb`:
+
+```bash
+adb install -r app-release.apk
+```
+
+Parašas tikrinamas Android SDK `build-tools` aplanke esančiu `apksigner`:
+
+```bash
+$ANDROID_HOME/build-tools/<versija>/apksigner verify --print-certs app-release.apk
+```
+
+Komanda turi išvardinti sertifikatą. Išleidimo sertifikato SHA-256 pirštų atspaudas bus įrašytas šiame skyriuje (žr. `RELEASING.md`), kad būtų galima patikrinti, ar atsisiųstas failas tikras.
+
 ## Apribojimai
 
 - **Tik lietuvių kalba.** Sąmoningai: vertimai į kitas kalbas atneštų kalbų pasirinkimą, o tai jau nustatymas.
-- **Tik Android TV.** Telefone programėlė neinstaliuosis, nes manifestas to neleidžia.
+- **Tik Android TV.** Manifeste `android.software.leanback` nurodytas kaip `required="true"`, todėl parduotuvė programėlės telefone nepasiūlys, o telefono launcheryje jos nėra. Sideload'intas APK telefone įsidiegtų, bet būtų be launcherio įrašo ir be prasmės, nes valdymas skirtas pultui.
 - **Stočių sąrašas yra kode.** Jei stotis pakeičia srauto adresą, reikia naujos versijos. Tai sąmoningas sprendimas: nuotolinis sąrašas būtų antras tinklo šaltinis ir dar viena vieta, kuri gali sugesti.
 - **„Kas groja" priklauso nuo stoties.** Kitoms stotims naudojami ICY metaduomenys; Power Hit Radio ir Gold dainą gauname iš jų oficialios svetainės kas 20 s, tik grojant. Nepavykus gauti šviežių duomenų eilutė lieka tuščia. Svetainės duomenys gali keliomis sekundėmis aplenkti garso buferį.
 - **Visada stoties logotipas.** Albumų viršeliai ir jų paieška pašalinti: daina keičia tik teksto eilutę, o stoties ženklas išlieka pastovus tiek pagrindiniame bloke, tiek karuselėje.
 - **Išbandyta viename realiame įrenginyje** (Telia DV8919X-LT, Android 14) ir Android TV emuliatoriuje. Kituose televizoriuose gali skirtis screensaverio ir Home mygtuko elgsena.
-- **Dar nėra išleisto APK.** Šiuo metu programėlė statoma iš šaltinio.
 
 ## Privatumas
 
@@ -176,6 +201,8 @@ Tai nereiškia, kad kodas sugeneruotas ir pamirštas. Bet tai ir nėra rankų da
 
 Garso variklis, tai yra Media3 sesijos servisas, automatinio prisijungimo logika ir stočių katalogas, yra kilęs iš [Fogwave](https://github.com/kalarina-bit/Fogwave) (GPL-3.0-only, autorius kalarina-bit). Visa kita yra parašyta šiam projektui: televizoriaus interfeisas, dizaino sistema, fokuso modelis, logotipas, baneris ir testai.
 
+Stočių pavadinimai ir ženklai priklauso jų transliuotojams ir naudojami tik tam, kad žmogus atpažintų grojančią stotį. GPL licencija jiems netaikoma, o programėlė nėra susieta su jokia stotimi. Išsamesnė pastaba — [NOTICE](NOTICE).
+
 Kadangi dalis kodo yra išvestinė, visa programėlė lieka GPL-3.0-only. Jei platini pakeistą versiją, turi pateikti ir jos išeities kodą.
 
 ---
@@ -184,9 +211,11 @@ Kadangi dalis kodo yra išvestinė, visa programėlė lieka GPL-3.0-only. Jei pl
 
 **Radijas** is an Android TV radio app for eleven Lithuanian stations. It opens and plays. One screen, four remote buttons, no menus, no accounts, no ads, no analytics.
 
-The interface is built for elderly users: a single focusable row, no wrap-around, no settings, no pause control anywhere. The palette is derived from each station's brand colour and tested for WCAG 4.5:1 contrast. The playback service retries forever with backoff, so a network drop recovers on its own.
+The interface is built for elderly users: a single focusable row, no wrap-around, no settings, no pause control anywhere. The palette is derived from each station's brand colour and tested for WCAG 4.5:1 contrast at a 960 dp screen width. The playback service retries forever with backoff, so a network drop recovers on its own.
 
-**Stack:** Kotlin 2.4.20, Jetpack Compose for TV, Media3/ExoPlayer 1.11.0, AGP 9.2.0, `minSdk 24`, `targetSdk 36`. Single module, version catalog, 78 JVM tests (including Robolectric UI tests).
+**Stack:** Kotlin 2.4.20, Jetpack Compose for TV, Media3/ExoPlayer 1.11.0, AGP 9.2.0, `minSdk 24`, `targetSdk 36`. Single module, version catalog, 96 JVM tests (including Robolectric UI tests; verified 2026-10-30).
+
+**Installing:** no APK has been published yet; the app is built from source (see the Lithuanian "Sukūrimas iš šaltinio" section). The first APK will be published on [GitHub Releases](https://github.com/afda1/radijas/releases) and installed with `adb install -r`.
 
 **Privacy:** no ads, trackers, analytics, crash reporting or Play Services. Besides the selected radio stream, the app requests official Power Hit Radio song metadata. These providers see the device IP. There are no artwork searches, image downloads or artwork caches. The PCM level visualizer neither records nor transmits audio and needs no microphone permission.
 
