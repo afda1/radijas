@@ -1,6 +1,7 @@
 package lt.radijas.tv
 
 import android.content.Context
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredSize
@@ -20,6 +21,8 @@ import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
 import lt.radijas.tv.ui.HeroPanel
+import lt.radijas.tv.ui.NowPlayingScreen
+import lt.radijas.tv.ui.NowPlayingUiState
 import lt.radijas.tv.ui.PlayerStatus
 import lt.radijas.tv.ui.StationShelf
 import lt.radijas.tv.ui.theme.RadijasTheme
@@ -108,5 +111,34 @@ class HeroPanelTest {
         composeTestRule.onNodeWithTag("station-tile-lietus").performKeyInput { pressKey(Key.DirectionUp) }
 
         composeTestRule.onNodeWithTag("screen-off-button").assertIsFocused()
+    }
+    @Test
+    fun `down from the screen-off control returns to the station that was left`() {
+        // The real screen, because the down key is wired there through ShelfFocusState.
+        composeTestRule.setContent {
+            RadijasTheme(stationId = station.id) {
+                Box(Modifier.requiredSize(960.dp, 540.dp)) {
+                    NowPlayingScreen(
+                        uiState = NowPlayingUiState(station = station, status = PlayerStatus.PLAYING),
+                        stations = stations,
+                        onSelect = {}
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag("station-tile-lietus").assertIsFocused()
+        composeTestRule.onNodeWithTag("station-tile-lietus").performKeyInput { pressKey(Key.DirectionUp) }
+        composeTestRule.onNodeWithTag("screen-off-button").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("screen-off-button").performKeyInput { pressKey(Key.DirectionDown) }
+        // The shelf scrolls the tile back into view in a coroutine before focusing it; give the
+        // test clock a few frames to run that scroll and the focus request after it.
+        repeat(4) { composeTestRule.mainClock.advanceTimeByFrame() }
+        composeTestRule.waitForIdle()
+
+        // The bug this pins: geometric focus search landed on the tile under the control's x
+        // position instead of the station the user actually left.
+        composeTestRule.onNodeWithTag("station-tile-lietus").assertIsFocused()
     }
 }

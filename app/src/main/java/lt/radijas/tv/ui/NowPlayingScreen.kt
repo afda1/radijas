@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import lt.radijas.tv.data.model.RadioStation
@@ -26,6 +27,7 @@ fun NowPlayingScreen(
     onSelect: (RadioStation) -> Unit,
     onScreenOff: () -> Unit = {}
 ) {
+    val shelfFocus = remember { ShelfFocusState() }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,6 +40,7 @@ fun NowPlayingScreen(
             status = uiState.status,
             trackTitle = uiState.trackTitle,
             onScreenOff = onScreenOff,
+            onNavigateDown = shelfFocus::focusLastFocusedStation,
             modifier = Modifier
                 .padding(horizontal = 48.dp)
                 .weight(1f)
@@ -48,6 +51,7 @@ fun NowPlayingScreen(
             stations = stations,
             playingId = uiState.station.id,
             onSelect = onSelect,
+            focusState = shelfFocus,
             modifier = Modifier.fillMaxWidth()
         )
     }

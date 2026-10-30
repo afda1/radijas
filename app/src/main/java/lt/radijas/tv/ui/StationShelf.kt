@@ -9,6 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,10 +48,28 @@ fun StationShelf(
     modifier: Modifier = Modifier,
     // Hoisted so a test can observe the row's scroll position; production call sites keep the
     // default and never share the state.
-    listState: LazyListState = rememberLazyListState()
+    listState: LazyListState = rememberLazyListState(),
+    // Remembers which tile was left when focus goes up to the screen-off control.
+    focusState: ShelfFocusState? = null
 ) {
     val focusRequesters = remember(stations) {
         stations.associate { station -> station.id to FocusRequester() }
+    }
+    // Which tile the D-pad left, and the way back: scroll it into view, then focus it.
+    var lastFocusedId by remember(stations) { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    SideEffect {
+        focusState?.requestFocusOnLastStation = {
+            val id = lastFocusedId
+            val index = id?.let { target -> stations.indexOfFirst { it.id == target } } ?: -1
+            if (id != null && index >= 0) {
+                scope.launch {
+                    listState.scrollToItem(index)
+                    withFrameNanos { }
+                    focusRequesters[id]?.requestFocus()
+                }
+            }
+        }
     }
 
     // One-shot: the shelf reveals the playing station once, when that station first becomes
@@ -105,8 +127,8 @@ fun StationShelf(
                 station = station,
                 focusRequester = focusRequesters.getValue(station.id),
                 onSelect = select,
-                // The playing tile stays marked after focus moves away from it.
-                isPlaying = station.id == playingId
+                isPlaying = station.id == playingId,
+                onFocused = { lastFocusedId = station.id }
             )
         }
     }

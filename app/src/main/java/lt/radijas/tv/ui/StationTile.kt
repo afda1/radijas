@@ -20,13 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
@@ -72,6 +68,7 @@ fun StationTile(
     focusRequester: FocusRequester = remember { FocusRequester() },
     onSelect: () -> Unit = {},
     isPlaying: Boolean = false,
+    onFocused: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
     // Each tile paints from its OWN station palette, not from the playing station's theme: the
@@ -86,10 +83,11 @@ fun StationTile(
 
     Column(
         modifier = modifier
-            .width(176.dp)
+            .width(200.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
+                if (focusState.isFocused) onFocused()
             }
             .focusable()
             // Accessibility action, not a click modifier: the raw D-pad key handling below is
@@ -127,20 +125,6 @@ fun StationTile(
             }
             .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
-            // Drawn inside the existing 10 dp padding, i.e. without changing the tile's height:
-            // a bar that shifted the shelf would move the hero's already tight vertical budget.
-            .drawWithContent {
-                drawContent()
-                if (isPlaying) {
-                    val barHeight = 3.dp.toPx()
-                    drawRoundRect(
-                        color = accent,
-                        topLeft = Offset((size.width - 48.dp.toPx()) / 2f, size.height - 7.dp.toPx()),
-                        size = Size(48.dp.toPx(), barHeight),
-                        cornerRadius = CornerRadius(barHeight / 2f)
-                    )
-                }
-            }
             .border(
                 width = 3.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused

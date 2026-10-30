@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import lt.radijas.tv.R
+import lt.radijas.tv.ui.theme.ScreenOffBlack
 
 /**
  * The black frame that stands in for "screen off". Any remote key brings the UI back; see
@@ -25,7 +26,7 @@ fun ScreenOffOverlay(hintVisible: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(ScreenOffBlack)
             .testTag("screen-off-overlay"),
         contentAlignment = Alignment.Center
     ) {

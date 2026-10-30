@@ -32,16 +32,28 @@ internal val RadijasShapes = Shapes(
  * them, and they are pinned by the design spec. M3 contributes the line heights and tracking.
  */
 internal val RadijasTypography = Typography(
+    // The station name is as big as it needs to be to read the logo's own words from a sofa,
+    // not the biggest thing that fits: the logo already carries the name, and the song and the
+    // instruction are what the eye needs. 64 sp keeps the hierarchy on the user's job.
     displayLarge = TextStyle(
-        fontSize = 96.sp,
-        lineHeight = 105.6.sp,
+        fontSize = 64.sp,
+        lineHeight = 70.sp,
         fontWeight = FontWeight.Bold,
-        letterSpacing = (-1.5).sp
+        letterSpacing = (-1.0).sp
     ),
-    headlineSmall = TextStyle(fontSize = 26.sp, lineHeight = 32.sp),
-    titleMedium = TextStyle(fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
-    labelLarge = TextStyle(fontSize = 16.sp, lineHeight = 22.sp, letterSpacing = 0.1.sp),
+    headlineSmall = TextStyle(fontSize = 32.sp, lineHeight = 38.sp),
+    titleMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
+    labelLarge = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, letterSpacing = 0.1.sp),
 )
+
+/** How much of the station's primary the screen-off control carries when it is focused. */
+internal const val ControlTint = 0.08f
+
+/**
+ * The blackout frame. Deliberately absolute black: the point of the control is the least light
+ * the panel can emit, so this is one surface that is not tinted towards the station hue.
+ */
+internal val ScreenOffBlack = Color(0xFF000000)
 
 /**
  * The M3 colour scheme for one station. Unknown ids fall back to the first-run station, so a

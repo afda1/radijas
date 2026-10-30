@@ -3,6 +3,7 @@ package lt.radijas.tv
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.repository.RadioRepository
+import lt.radijas.tv.ui.theme.ControlTint
 import lt.radijas.tv.ui.theme.stationColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -40,6 +41,11 @@ class StationPaletteTest {
                 "status line 84% on surface" to (compose(c.onSurface, c.surface, 0.84f) to c.surface),
                 "onSurfaceVariant on surfaceVariant" to (c.onSurfaceVariant to c.surfaceVariant),
                 "onPrimaryContainer on primaryContainer" to (c.onPrimaryContainer to c.primaryContainer),
+                // The screen-off glyph sits on a pill that is the container tinted 8 % towards
+                // primary; the audit found this pair untested.
+                "screen-off glyph on its pill" to (
+                    c.primary to lerp(c.surfaceVariant, c.primary, ControlTint)
+                    ),
 
                 // The hero glow tints the right edge of the text column; the old palette test
                 // pinned this and the role-based one would otherwise let it regress.
@@ -72,6 +78,16 @@ class StationPaletteTest {
                 assertTrue("${station.id} border on $name: $ratio", ratio >= pair.second)
             }
         }
+    }
+
+    /** M3-style blend used by the screen-off control's focused pill. */
+    private fun lerp(from: Long, to: Long, fraction: Float): Long {
+        fun channel(shift: Int): Long {
+            val start = ((from shr shift) and 0xFF).toFloat()
+            val end = ((to shr shift) and 0xFF).toFloat()
+            return (start + (end - start) * fraction).toLong()
+        }
+        return (0xFFL shl 24) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
     }
 
     /** Worst-case glow tint where it reaches the text column: 16 % of primaryContainer. */

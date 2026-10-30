@@ -69,6 +69,7 @@ import androidx.tv.material3.Text
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import lt.radijas.tv.R
+import lt.radijas.tv.ui.theme.ControlTint
 import lt.radijas.tv.ui.theme.logoAspect
 import lt.radijas.tv.ui.theme.stationLogoWidthFraction
 import lt.radijas.tv.data.model.RadioStation
@@ -90,6 +91,7 @@ fun HeroPanel(
     status: PlayerStatus,
     trackTitle: String? = null,
     onScreenOff: () -> Unit = {},
+    onNavigateDown: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -124,7 +126,7 @@ fun HeroPanel(
                 Spacer(Modifier.height(2.dp))
                 TrackTitleLine(trackTitle)
                 Spacer(Modifier.height(2.dp))
-                StatusLine(status, onScreenOff)
+                StatusLine(status, onScreenOff, onNavigateDown)
             }
             // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
             val heroPainter = painterResource(station.iconResId)
@@ -153,9 +155,6 @@ fun HeroPanel(
  * fraction-space model the contrast test samples. The brush is built inside `drawWithCache`,
  * i.e. once per size and brand, not per recomposition.
  */
-/** How much of the station's primary the screen-off control carries. */
-private const val CONTROL_TINT = 0.08f
-
 /** Where the glow's core sits, as fractions of the hero box: under the station icon. */
 private const val HeroCoreX = 0.90f
 private const val HeroCoreY = 0.44f
@@ -195,7 +194,7 @@ private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier
  * Its label appears only while it is focused, so the screen never carries a permanent button.
  */
 @Composable
-private fun ScreenOffControl(onClick: () -> Unit) {
+private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val actionLabel = stringResource(R.string.screen_off_action)
     var isFocused by remember { mutableStateOf(false) }
@@ -223,11 +222,19 @@ private fun ScreenOffControl(onClick: () -> Unit) {
                     }
                 }
                 .onKeyEvent { event ->
-                    // Fire on release: turning the black frame on during the DOWN would let the
-                    // same press's UP wake the screen again.
-                    if (event.type == KeyEventType.KeyUp &&
+                    if (event.type == KeyEventType.KeyDown &&
+                        event.nativeKeyEvent.repeatCount == 0 &&
+                        event.key == Key.DirectionDown
+                    ) {
+                        // Down returns to the station the user came from, not to whatever tile
+                        // sits under this control's x position.
+                        onNavigateDown()
+                        true
+                    } else if (event.type == KeyEventType.KeyUp &&
                         (event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter)
                     ) {
+                        // Fire on release: turning the black frame on during the DOWN would let
+                        // the same press's UP wake the screen again.
                         onClick()
                         true
                     } else {
@@ -235,7 +242,12 @@ private fun ScreenOffControl(onClick: () -> Unit) {
                     }
                 }
                 .clip(MaterialTheme.shapes.small)
-                .background(lerp(colors.surfaceVariant, colors.primary, CONTROL_TINT))
+                // Idle: a quiet glyph over the hero, no pill to float. Focused: a pill so the
+                // label and the ring have something to sit on.
+                .background(
+                    if (isFocused) lerp(colors.surfaceVariant, colors.primary, ControlTint)
+                    else Color.Transparent
+                )
                 .border(
                     width = 3.dp,
                     color = if (isFocused) colors.border else Color.Transparent,
@@ -263,41 +275,31 @@ private fun ScreenOffControl(onClick: () -> Unit) {
     }
 }
 
-/** Largest hero-name size, from the design spec. */
-private val HeroNameMaxSize = 96.sp
+/** Largest hero-name size; comes from the theme's displayLarge. */
+private val HeroNameMaxSize = 64.sp
 
 /** Smallest the name may shrink to before an ellipsis is the lesser evil. */
-private val HeroNameMinSize = 48.sp
-
-/** Line height of the name; the band below keeps the block at one height for every station. */
-private val HeroNameLineHeight = 104.sp
+private val HeroNameMinSize = 40.sp
 
 /**
- * The station name, at 96 sp whenever it fits the hero's text column.
+ * The station name, at the theme's 64 sp whenever it fits the hero's text column.
  *
- * At 1080p that column is ~608 dp, and "Power Hit Radio Gold" is wider than that at 96 sp, so
- * a fixed size would ellipsise two of the eleven stations to "Power Hit R…". Instead the name
- * steps down until it fits on one line: a smaller name is still the station's name, a cut one
- * is not. The floor is 48 sp, below which the ellipsis returns.
+ * The longest station names no longer need the old 96 sp step-down; the loop stays as the guard
+ * for a future long name: the name steps down until it fits one line, a cut name is not a name.
+ * The floor is 40 sp, below which the ellipsis returns.
  */
 @Composable
 private fun StationName(name: String) {
     val style = MaterialTheme.typography.displayLarge.copy(
-        fontSize = HeroNameMaxSize,
-        lineHeight = HeroNameLineHeight,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-1.5).sp,
         // The hero is height-starved at 1080p; the font's built-in top and bottom padding
         // would cost ~8 dp and push the status line out.
         platformStyle = PlatformTextStyle(includeFontPadding = false)
     )
     BoxWithConstraints(
-        // A fixed band, like the track block: a station with a fitted 64 sp name must not
-        // shift the status line when the station changes. 113 dp is the 96 sp name's natural
-        // line box (its font metrics are 0.5 dp taller than the 104 sp line height); heightIn
-        // lets a larger system font scale grow the band instead of painting the name over the
-        // track line.
-        modifier = Modifier.heightIn(min = 113.dp),
+        // A fixed band, like the track block: a station whose name steps down must not shift
+        // the status line. 76 dp is the 64 sp name's natural line box; heightIn lets a larger
+        // system font scale grow the band instead of painting the name over the track line.
+        modifier = Modifier.heightIn(min = 76.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         val measurer = rememberTextMeasurer()
@@ -338,8 +340,7 @@ private fun TrackTitleLine(trackTitle: String?) {
         Text(
             text = trackTitle.orEmpty(),
             modifier = Modifier.testTag("hero-track-title"),
-            fontSize = 26.sp,
-            lineHeight = 32.sp,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -348,7 +349,11 @@ private fun TrackTitleLine(trackTitle: String?) {
 }
 
 @Composable
-private fun StatusLine(status: PlayerStatus, onScreenOff: () -> Unit) {
+private fun StatusLine(
+    status: PlayerStatus,
+    onScreenOff: () -> Unit,
+    onNavigateDown: () -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -359,18 +364,14 @@ private fun StatusLine(status: PlayerStatus, onScreenOff: () -> Unit) {
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 24 sp semibold: this is the line an elderly user has to read to fix a silent radio
-            // ("Nepavyksta prisijungti. Paspausk OK."), so it is the one line that must not be
-            // caption-sized. It ellipsises only when the control is focused, which is the one
+            // The theme's 28 sp semibold: this is the line an elderly user has to read to fix a
+            // silent radio ("Nepavyksta prisijungti. Paspausk OK."), so it is the one line that
+            // must not be caption-sized. It ellipsises only when the control is focused, the one
             // moment the label needs the room.
             Text(
                 text = stringResource(status.textRes()),
                 modifier = Modifier.testTag("hero-status"),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontSize = 24.sp,
-                    lineHeight = 30.sp,
-                    fontWeight = FontWeight.SemiBold
-                ),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.84f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -379,7 +380,7 @@ private fun StatusLine(status: PlayerStatus, onScreenOff: () -> Unit) {
             EqualizerBars(active = status == PlayerStatus.PLAYING)
         }
         Spacer(Modifier.width(16.dp))
-        ScreenOffControl(onScreenOff)
+        ScreenOffControl(onScreenOff, onNavigateDown)
     }
 }
 
