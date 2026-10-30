@@ -43,7 +43,7 @@ internal const val HeroGlowRadiusY = 0.62f
 /** Brand amount at the core, on the mid ring and at the edge of the glow. */
 private const val HeroCoreTint = 0.55f
 private const val HeroMidTint = 0.24f
-private const val HeroEdgeTint = 0f
+private const val HeroEdgeTint = 0.035f
 
 /** Distance (in glow radii) where the core ends, and where the mid ring starts to fade. */
 private const val HeroCoreStop = 0.18f

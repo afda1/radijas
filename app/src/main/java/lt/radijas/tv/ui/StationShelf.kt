@@ -16,6 +16,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import lt.radijas.tv.ui.theme.RadijasBackground
 import androidx.compose.ui.unit.dp
 import lt.radijas.tv.data.model.RadioStation
 
@@ -71,11 +77,22 @@ fun StationShelf(
 
     LazyRow(
         state = listState,
-        modifier = modifier.fillMaxWidth(),
-        // Not the safe area (that is applied once by the screen): this 8 dp inset is only
-        // head-room for the focused tile's 5 % zoom, which otherwise gets its ring clipped
-        // by the lazy row's own bounds at the first and last station.
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().drawWithContent {
+            drawContent()
+            // Fade only at physical edges, never over the safe-area focused card.
+            val edge = 28.dp.toPx()
+            if (listState.canScrollBackward) drawRect(
+                brush = Brush.horizontalGradient(listOf(RadijasBackground, Color.Transparent), endX = edge),
+                size = Size(edge, size.height)
+            )
+            if (listState.canScrollForward) drawRect(
+                brush = Brush.horizontalGradient(listOf(Color.Transparent, RadijasBackground), startX = size.width - edge, endX = size.width),
+                topLeft = Offset(size.width - edge, 0f), size = Size(edge, size.height)
+            )
+        },
+        // Content inset, not a clipped viewport: cards now scroll through the safe margins.
+        // 8 dp vertical head-room clears the full 6 % focused scale (~6.24 dp).
+        contentPadding = PaddingValues(horizontal = 48.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(stations, key = { station -> station.id }) { station ->

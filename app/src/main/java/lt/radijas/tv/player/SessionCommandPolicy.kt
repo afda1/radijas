@@ -1,8 +1,10 @@
 package lt.radijas.tv.player
 
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService.LibraryParams
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
@@ -21,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture
  * disallowed command is never advertised to the controller in the first place - it is not rejected
  * later, when the user has already pressed something and waits for a result.
  */
+@OptIn(UnstableApi::class)
 internal object SessionCommandPolicy {
 
     /**
@@ -67,6 +70,7 @@ internal object SessionCommandPolicy {
  * service starts with no media item, and an `ACTION_PLAY` / media button cannot set one (`play()`
  * on an empty timeline is a no-op), so there is nothing to un-pause and no pause state to fall into.
  */
+@OptIn(UnstableApi::class)
 internal class RestrictedConnectionCallback(
     private val appPackage: String,
     private val delegate: MediaLibrarySession.Callback

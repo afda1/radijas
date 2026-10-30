@@ -30,7 +30,7 @@ Nesėkmė (net jei techniškai viskas veikia): reikia daugiau nei dviejų paspau
 - Mėgstamų sąrašas, paieška, filtras pagal žanrą.
 - Ekvalaizeris, garso efektų UI.
 - Miego laikmatis (televizorius turi savo).
-- Daugiau nei 10 stočių. Stotys — fiksuotas sąrašas kode.
+- Daugiau nei 10 stočių. Stotys — fiksuotas sąrašas kode. (2026-10-30 sąmoningai pakelta iki vienuolikos: pridėta European Hit Radio, žr. §6.5. Tai atskiras sprendimas, ne bendra taisyklė.)
 - Nustatymų ekranas. Nėra ką nustatyti.
 - Dienos/naktinės temos perjungimas. Tik tamsi.
 - Kalbų perjungimas. Tik lietuvių.
@@ -108,7 +108,7 @@ Jei ko nors iš šito prireiks — tai bus atskiras sprendimas, ne „dar vienas
 
 ### 6.5 Stotys
 
-Tas pats sąrašas kaip Fogwave (10 stočių, URL jau patikrinti ir veikiantys):
+Tas pats sąrašas kaip Fogwave (10 stočių, URL jau patikrinti ir veikiantys), plius vienuolikta stotis, pridėta 2026-10-30:
 
 | Stotis | Ženklo spalva |
 |---|---|
@@ -122,6 +122,9 @@ Tas pats sąrašas kaip Fogwave (10 stočių, URL jau patikrinti ir veikiantys):
 | M-1 Plius | `#1E6FE8` |
 | Gold FM | `#B98B3E` |
 | RC | `#E4322B` |
+| European Hit Radio | `#E20E18` |
+
+European Hit Radio srautas — oficialus lietuviškas `https://stream.ehr.lt:8443/ehr` (ne Latvijos EHR tinklo feed), ženklas iš `europeanhitradio.lt` balto logotipo.
 
 **[mano]** Lentyna rodo 6–7 plyteles, likusios pasiekiamos slenkant. Fokusas centruojamas, kai įmanoma; prie pirmos ir paskutinės stoties jis prispaudžiamas prie krašto. **Sąrašas nesivynioja per galus:** paspaudus ← prie pirmos stoties nieko neįvyksta. Vyresniam naudotojui vyniojimasis atrodo kaip gedimas („aš jau buvau pradžioje, kodėl vėl rodo pabaigą“).
 
@@ -257,3 +260,22 @@ Jokioje būsenoje ekranas neturi mažiau elementų nei `Playing` — niekas neš
 - **Overscan.** Dalis televizorių nukerpa 3–5 % kadro; dėl to saugi zona yra 5 %.
 - **HDMI garso vėlavimas** pirmą sekundę po paleidimo — normalu, ne klaida.
 - **Upstreamas gyvas silpnai** (0 žvaigždučių, vienas autorius). Ilgainiui variklį gali tekti prižiūrėti patiems.
+
+## 11. 2026-10-30 patvirtinti papildymai
+
+Ši dalis turi pirmenybę prieš aukščiau esančius pradinius vizualinius ir tinklo apribojimus:
+
+- Vienuolika stočių rikiuojamos A–Z. Paleidimas visada pagal paskutinį išsaugotą ID;
+  pirmą kartą arba dingus išsaugotai stočiai — Lietus. Rikiavimas nepakeičia šios taisyklės.
+- Karuselė slenka per visą ekrano plotį; 48 dp saugi horizontali paraštė yra turinio,
+  ne viewport dalis. Kraštai švelniai išnyksta, fokuso masteliui paliekama 8 dp vertikaliai.
+- Didesni apvalinimai ir vientisi toniniai paviršiai; nėra vidinio juodo logotipo kvadrato.
+  Tai Material You įkvėpta TV kryptis, ne naujas nustatymų ar temų pasirinkimas.
+- Hero ir karuselėje **visada stoties ženklas**. Išbandyti albumų viršeliai
+  vėlesniu vartotojo sprendimu pašalinti visiškai, kartu su jų paieška ir talpykla.
+- Power Hit Radio ir Gold duomenims leidžiamos tiesioginės užklausos į oficialią
+  svetainę. Užklausų į muzikos katalogus ar paveikslėlių CDN nėra. Jokios svetainių
+  JavaScript, reklamų ar analitikos integracijos. Privatumo aprašas atnaujinamas.
+- Prie „Gyvai“ leidžiami trys maži tikro PCM garso lygio brūkšneliai. Jie nekeičia
+  maketo, nenaudoja mikrofono, neįrašo ir nesiunčia garso. Ne dažnių spektro grafikas.
+- Vienas ekranas, keturi pulto mygtukai, jokių papildomų pasirinkimų ar registracijos.

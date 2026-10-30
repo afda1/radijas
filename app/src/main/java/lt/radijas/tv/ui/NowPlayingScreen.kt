@@ -29,15 +29,15 @@ fun NowPlayingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(RadijasBackground)
-            // The 5 % safe area, applied once for the whole screen: no child repeats it, so
-            // there is a single pair of numbers to change if a TV overscans more than this.
-            .padding(horizontal = 48.dp, vertical = 27.dp)
+            // Vertical overscan safety. The shelf itself extends to the physical screen edges.
+            .padding(vertical = 27.dp)
     ) {
         HeroPanel(
             station = uiState.station,
             status = uiState.status,
             trackTitle = uiState.trackTitle,
             modifier = Modifier
+                .padding(horizontal = 48.dp)
                 .weight(1f)
                 .fillMaxWidth()
         )

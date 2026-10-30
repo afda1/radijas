@@ -11,6 +11,15 @@ import org.robolectric.RobolectricTestRunner
 class StartupStationTest {
 
     @Test
+    fun `every saved station survives alphabetical ordering including ehr`() {
+        val repo = RadioRepository(ApplicationProvider.getApplicationContext())
+        repo.stations.forEach { station ->
+            repo.setLastStationId(station.id)
+            assertEquals(station.id, StartupStation.resolve(repo).id)
+        }
+    }
+
+    @Test
     fun `first launch plays lietus`() {
         val repo = RadioRepository(ApplicationProvider.getApplicationContext())
         assertEquals("lietus", StartupStation.resolve(repo).id)

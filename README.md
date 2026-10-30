@@ -2,9 +2,9 @@
 
 **Android TV radijo programėlė. Įjungi ir groja.**
 
-Vienas ekranas, dešimt Lietuvos stočių, jokio meniu. Skirta tiems, kuriems radijas televizoriuje turi įsijungti taip pat paprastai kaip televizijos kanalas.
+Vienas ekranas, vienuolika Lietuvos stočių, jokio meniu. Skirta tiems, kuriems radijas televizoriuje turi įsijungti taip pat paprastai kaip televizijos kanalas.
 
-<img src="docs/screenshots/tv-lietus.png" alt="Lietus groja" width="100%">
+<img src="docs/screenshots/2026-10-30/06-logo-fallback.png" alt="Lietus groja, rodomas stoties logotipas" width="100%">
 
 ## Kam tai skirta
 
@@ -18,9 +18,9 @@ Trečia grupė yra tie, kurie tiesiog nori fono. Radijas per televizorių yra ge
 
 | | | |
 |---|---|---|
-| <img src="docs/screenshots/tv-rock-fm.png" width="330"> | <img src="docs/screenshots/tv-m1-plius.png" width="330"> | <img src="docs/screenshots/tv-radiocentras.png" width="330"> |
+| <img src="docs/screenshots/2026-10-30/05-ehr-carousel-start.png" alt="EHR, karuselės pradžia" width="330"> | <img src="docs/screenshots/2026-10-30/02-power-hit-radio.png" alt="Power Hit Radio, logotipo atsarga" width="330"> | <img src="docs/screenshots/2026-10-30/04-carousel-end.png" alt="ZIP FM, karuselės pabaiga" width="330"> |
 
-Spalva ateina iš stoties ženklo. Perjungi stotį, persidažo visas ekranas: tamsiai žalia Lietui, raudona Rock FM, oranžinė Radiocentrui. Logotipai yra balti siluetai, kad būtų įskaitomi bet kurioje spalvoje ir iš sofos. Tai ne dekoracija: paletė apskaičiuojama taip, kad tekstas visada turėtų bent 4.5:1 kontrastą, ir tai tikrinama automatiškai visoms dešimčiai stočių.
+Spalva ateina iš stoties ženklo. Perjungi stotį, persidažo visas ekranas: tamsiai žalia Lietui, raudona Rock FM, oranžinė Radiocentrui. Logotipai yra balti siluetai, kad būtų įskaitomi bet kurioje spalvoje ir iš sofos. Tai ne dekoracija: paletė apskaičiuojama taip, kad tekstas visada turėtų bent 4.5:1 kontrastą, ir tai tikrinama automatiškai visoms vienuolikai stočių.
 
 ## Ką daro
 
@@ -35,7 +35,7 @@ Valdymas telpa į keturis pulto mygtukus:
 | Back / Home | Išeiti ir nutildyti |
 | ↑ ↓ | Nieko |
 
-Stočių sąrašas: ZIP FM, Power Hit Radio, Power Hit Radio Gold, Rock FM, Relax FM, Lietus, M-1, M-1 Plius, Gold FM, Radiocentras.
+Stotys rikiuojamos A–Z: European Hit Radio, Gold FM, Lietus, M-1, M-1 Plius, Power Hit Radio, Power Hit Radio Gold, Radiocentras, Relax FM, Rock FM, ZIP FM. Paleidus groja paskutinė klausyta stotis, ne pirmoji sąraše; pirmą kartą — Lietus.
 
 **Automatinis prisijungimas iš naujo.** Nutrūkus srautui, bandoma po 1, 2, 4, 8, 15 sekundžių, paskui kas 30 sekundžių, be galo. Ekrane rodoma „Bandau vėl…", o po pusės minutės be sėkmės atsiranda „Nepavyksta prisijungti. Paspausk OK.". Bandymai nesiliauja net tada, kai ekrane rodoma klaida, todėl naktį trumpam dingęs Wi-Fi atsigauna pats.
 
@@ -92,17 +92,19 @@ Tai ne tik kosmetika. `MediaSession.Callback.onConnect` atskiria savo programėl
 
 ### Testai
 
-`app/src/test/` turi 63 testus, kurie paleidžiami be emuliatoriaus:
+`app/src/test/` turi 78 testus, kurie paleidžiami be emuliatoriaus:
 
 - fokuso elgsena lentynoje (pradinis fokusas, judėjimas, kraštai, ↑↓ ignoravimas),
 - būsenų skaičiavimas ir perėjimų tvarka,
-- paletės kontrastas visoms dešimčiai stočių,
+- paletės kontrastas visoms vienuolikai stočių,
 - dainos pavadinimo apdorojimas,
 - pranešimo veiksmai ir sesijos komandų ribojimas,
-- paleidimo stotis ir sustabdymo taisyklė,
-- logotipų failų vientisumas (visi nepermatomi pikseliai balti).
+- paleidimo stotis, sustabdymo taisyklė ir tai, ar grįžus į programėlę srautas turi būti paleistas iš naujo,
+- logotipų failų vientisumas (visi nepermatomi pikseliai balti),
+- A–Z tvarka, Power duomenų šviežumas ir pastovus stoties logotipas keičiantis dainai bei grojimo būsenai,
+- PCM lygio matavimas nekeičiant garso buferio.
 
-Testai rašyti prieš kodą, ne po jo.
+2026-10-30 pakeitimų patikros įrodymai ir likę realaus TV patikrinimai — [patikros užrašuose](docs/2026-10-30-radio-update.md).
 
 ## Projekto struktūra
 
@@ -112,6 +114,7 @@ app/src/main/java/lt/radijas/tv/
   RadijasApp.kt
   StartupStation.kt      kurią stotį groti paleidus
   StopPolicy.kt          kada nutilti
+  RelaunchPolicy.kt      ar grįžus į programėlę reikia paleisti srautą iš naujo
   data/                  stotys ir jų saugojimas
   player/                Media3 servisas, grotuvo valdymas, ICY meta
   ui/                    ekranas, lentyna, plytelė, būsenos, tema
@@ -121,12 +124,12 @@ docs/screenshots/        ekrano nuotraukos
 
 ## Sukūrimas iš šaltinio
 
-Reikia JDK 17 ar naujesnio ir Android SDK su `platforms;android-37`.
+APK surinkimui pakanka JDK 17; testams su Android 36 / Robolectric reikia **JDK 21**. Rekomenduojama viskam naudoti JDK 21 ir Android SDK su `platforms;android-37.0`.
 
 ```bash
 git clone https://github.com/afda1/radijas.git
 cd radijas
-export JAVA_HOME=/kelias/iki/jdk-17
+export JAVA_HOME=/kelias/iki/jdk-21
 export ANDROID_HOME=/kelias/iki/android-sdk
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
@@ -143,7 +146,8 @@ Testai:
 - **Tik lietuvių kalba.** Sąmoningai: vertimai į kitas kalbas atneštų kalbų pasirinkimą, o tai jau nustatymas.
 - **Tik Android TV.** Telefone programėlė neinstaliuosis, nes manifestas to neleidžia.
 - **Stočių sąrašas yra kode.** Jei stotis pakeičia srauto adresą, reikia naujos versijos. Tai sąmoningas sprendimas: nuotolinis sąrašas būtų antras tinklo šaltinis ir dar viena vieta, kuri gali sugesti.
-- **„Kas groja" priklauso nuo stoties.** Power Hit Radio ir Power Hit Radio Gold savo srautuose dainos pavadinimo nesiunčia, todėl ten eilutė lieka tuščia. Tai stoties pusės apribojimas, ne programėlės.
+- **„Kas groja" priklauso nuo stoties.** Kitoms stotims naudojami ICY metaduomenys; Power Hit Radio ir Gold dainą gauname iš jų oficialios svetainės kas 20 s, tik grojant. Nepavykus gauti šviežių duomenų eilutė lieka tuščia. Svetainės duomenys gali keliomis sekundėmis aplenkti garso buferį.
+- **Visada stoties logotipas.** Albumų viršeliai ir jų paieška pašalinti: daina keičia tik teksto eilutę, o stoties ženklas išlieka pastovus tiek pagrindiniame bloke, tiek karuselėje.
 - **Išbandyta viename realiame įrenginyje** (Telia DV8919X-LT, Android 14) ir Android TV emuliatoriuje. Kituose televizoriuose gali skirtis screensaverio ir Home mygtuko elgsena.
 - **Dar nėra išleisto APK.** Šiuo metu programėlė statoma iš šaltinio.
 
@@ -151,13 +155,16 @@ Testai:
 
 Nėra reklamų. Nėra analitikos. Nėra crash reporterių. Nėra paskyrų, prisijungimų ar sinchronizavimo. Nėra Google Play Services, Firebase ar kitų SDK, kurie siunčia duomenis.
 
-Vienintelis tinklo srautas yra radijo stoties adresas, kurį pasirenki pats. Programėlė taip pat naudoja `ACCESS_NETWORK_STATE`, kad žinotų, kada tinklas grįžo, ir `WAKE_LOCK` bei fono servisą, kad grotų užgesus ekranui. Daugiau leidimų nėra.
+Tinklo užklausos: pasirinktos radijo stoties garsas ir Power Hit Radio / Gold oficialios svetainės dainos JSON. Šie serveriai mato IP adresą. Muzikos katalogų paieškos, paveikslėlių atsisiuntimo ir viršelių talpyklos nėra. Paskyrų, reklamų SDK, identifikatorių ir analitikos nesiunčiame.
+
+Subtili vizualizacija skaičiuoja tris naujausius grotuvo PCM garso lygius. Mikrofonas nenaudojamas, garsas neįrašomas ir niekur nesiunčiamas, `RECORD_AUDIO` leidimo nereikia. Programėlė naudoja `ACCESS_NETWORK_STATE`, kad žinotų, kada tinklas grįžo, ir `WAKE_LOCK` bei fono servisą, kad grotų užgesus ekranui.
 
 ## Kaip tai padaryta
 
 Projektas sukurtas dirbtinio intelekto pagalba, žmogui vadovaujant.
 
-- Kodą, testus ir dokumentaciją rašė **DeepSeek V4.1 Flash**, veikiantis per OpenCode agentą.
+- Pradinį kodą, testus ir dokumentaciją rašė **DeepSeek V4.1 Flash**, veikiantis per OpenCode agentą.
+- 2026-10-30 EHR, A–Z, Power metaduomenų ir vizualizacijos pakeitimai — **GPT-6.1 Sol** per OpenCode, pagal žmogaus nurodymus; šio etapo UI tikrinta Android TV emuliatoriuje, ne fiziniame televizoriuje. Išbandyti albumų viršeliai vėliau žmogaus sprendimu pašalinti.
 - Produkto sprendimus priėmė žmogus: kam skirta, kaip atrodo, ko sąmoningai nėra, kokia kiekvienos stoties spalva. Kiekvienas žingsnis buvo tikrinamas realiame televizoriuje, ne tik emuliatoriuje.
 - Kiekvienas pakeitimas ėjo per atskirą peržiūrą: testai, specifikacijos atitikimas, kodo kokybė.
 
@@ -175,14 +182,14 @@ Kadangi dalis kodo yra išvestinė, visa programėlė lieka GPL-3.0-only. Jei pl
 
 ## English
 
-**Radijas** is an Android TV radio app for ten Lithuanian stations. It opens and plays. One screen, four remote buttons, no menus, no accounts, no ads, no analytics.
+**Radijas** is an Android TV radio app for eleven Lithuanian stations. It opens and plays. One screen, four remote buttons, no menus, no accounts, no ads, no analytics.
 
 The interface is built for elderly users: a single focusable row, no wrap-around, no settings, no pause control anywhere. The palette is derived from each station's brand colour and tested for WCAG 4.5:1 contrast. The playback service retries forever with backoff, so a network drop recovers on its own.
 
-**Stack:** Kotlin 2.4.20, Jetpack Compose for TV, Media3/ExoPlayer 1.11.0, AGP 9.2.0, `minSdk 24`, `targetSdk 36`. Single module, version catalog, 63 JVM tests with Robolectric.
+**Stack:** Kotlin 2.4.20, Jetpack Compose for TV, Media3/ExoPlayer 1.11.0, AGP 9.2.0, `minSdk 24`, `targetSdk 36`. Single module, version catalog, 78 JVM tests (including Robolectric UI tests).
 
-**Privacy:** no ads, no trackers, no analytics, no crash reporting, no Play Services. The only network traffic is the radio stream itself.
+**Privacy:** no ads, trackers, analytics, crash reporting or Play Services. Besides the selected radio stream, the app requests official Power Hit Radio song metadata. These providers see the device IP. There are no artwork searches, image downloads or artwork caches. The PCM level visualizer neither records nor transmits audio and needs no microphone permission.
 
 Built on the [Fogwave](https://github.com/kalarina-bit/Fogwave) playback engine (GPL-3.0-only); the TV interface, design system, focus model and tests are original. Licensed GPL-3.0-only.
 
-**Built with AI assistance:** the code, tests and documentation were written by DeepSeek V4.1 Flash running in an OpenCode agent, under human direction. Product and design decisions, and every device check, were made by a human.
+**Built with AI assistance:** the initial code, tests and documentation were written by DeepSeek V4.1 Flash running in OpenCode, under human direction. The 2026-10-30 updates were implemented with GPT-6.1 Sol in OpenCode and checked in an Android TV emulator. Product decisions and physical-device checks belong to the human maintainer.

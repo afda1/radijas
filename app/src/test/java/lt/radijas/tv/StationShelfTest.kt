@@ -37,16 +37,16 @@ class StationShelfTest {
 
     @Test
     fun `right moves focus to next station`() {
-        composeTestRule.setContent { StationShelf(stations, playingId = "zip", onSelect = {}) }
-        composeTestRule.onNodeWithTag("station-tile-zip").performKeyInput { pressKey(Key.DirectionRight) }
-        composeTestRule.onNodeWithTag("station-tile-powerhit").assertIsFocused()
+        composeTestRule.setContent { StationShelf(stations, playingId = "ehr", onSelect = {}) }
+        composeTestRule.onNodeWithTag("station-tile-ehr").performKeyInput { pressKey(Key.DirectionRight) }
+        composeTestRule.onNodeWithTag("station-tile-goldfm").assertIsFocused()
     }
 
     @Test
     fun `left at first station keeps focus`() {
-        composeTestRule.setContent { StationShelf(stations, playingId = "zip", onSelect = {}) }
-        composeTestRule.onNodeWithTag("station-tile-zip").performKeyInput { pressKey(Key.DirectionLeft) }
-        composeTestRule.onNodeWithTag("station-tile-zip").assertIsFocused()
+        composeTestRule.setContent { StationShelf(stations, playingId = "ehr", onSelect = {}) }
+        composeTestRule.onNodeWithTag("station-tile-ehr").performKeyInput { pressKey(Key.DirectionLeft) }
+        composeTestRule.onNodeWithTag("station-tile-ehr").assertIsFocused()
     }
 
     @Test
@@ -73,7 +73,7 @@ class StationShelfTest {
     @Test
     fun `selection does not move the shelf or the focus`() {
         lateinit var listState: LazyListState
-        val playingId = mutableStateOf("zip")
+        val playingId = mutableStateOf("ehr")
         composeTestRule.setContent {
             listState = rememberLazyListState()
             StationShelf(
@@ -83,22 +83,21 @@ class StationShelfTest {
                 listState = listState
             )
         }
-        composeTestRule.onNodeWithTag("station-tile-zip").assertIsFocused()
+        composeTestRule.onNodeWithTag("station-tile-ehr").assertIsFocused()
         assertEquals("the initial reveal leaves the playing tile first", 0, listState.firstVisibleItemIndex)
 
-        // Selecting m1 (index 6) would once have scrolled the row to it and re-requested focus.
+        // Selecting another station must not scroll or re-request focus.
         playingId.value = "m1"
         composeTestRule.waitForIdle()
 
         assertEquals("selection must not scroll the shelf", 0, listState.firstVisibleItemIndex)
-        composeTestRule.onNodeWithTag("station-tile-zip").assertIsFocused()
+        composeTestRule.onNodeWithTag("station-tile-ehr").assertIsFocused()
     }
 
     /**
      * At launch the shelf is composed before the station is known, so the first run of the reveal
      * effect has no id to reveal. The reveal must run again when that initial station arrives -
-     * otherwise the row stays at ZIP FM and the ring lands on the first tile even though the last
-     * played station is, say, Radiocentras (index 9).
+     * otherwise the ring lands on the first tile even though a later station is playing.
      */
     @Test
     fun `reveals the station when it is resolved after first composition`() {
@@ -116,7 +115,7 @@ class StationShelfTest {
         composeTestRule.waitForIdle()
         assertEquals("nothing to reveal before the station is known", 0, listState.firstVisibleItemIndex)
 
-        // Radiocentras is the last station, well outside the initial viewport.
+        // Radiocentras is near the end of the row, well outside the initial viewport.
         playingId.value = "rc"
         composeTestRule.waitForIdle()
 

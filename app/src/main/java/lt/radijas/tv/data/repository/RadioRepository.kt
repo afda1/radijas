@@ -80,8 +80,17 @@ class RadioRepository(context: Context) {
             streamUrl = "https://stream1.rc.lt/rc128.mp3",
             iconResId = R.drawable.ic_station_rc,
             brandColor = 0xFFF05A28L
+        ),
+        RadioStation(
+            id = "ehr",
+            name = "European Hit Radio",
+            // The station's own Lithuanian stream (192 kbit/s MP3), not the Latvian EHR network feed.
+            streamUrl = "https://stream.ehr.lt:8443/ehr",
+            iconResId = R.drawable.ic_station_ehr,
+            // Sampled from the red dot of the station's official logo (europeanhitradio.lt).
+            brandColor = 0xFFE20E18L
         )
-    )
+    ).sortedBy { it.name.lowercase(java.util.Locale.ROOT) }
 
     fun lastStationId(): String =
         prefs.getString("last_station_id", null) ?: StartupStation.DEFAULT_ID

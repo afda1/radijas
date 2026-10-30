@@ -137,6 +137,13 @@ class MainActivity : ComponentActivity() {
         // Launching from the TV launcher while the activity is still alive arrives here
         // (launchMode="singleTop"), so play the last station again after Home stopped it.
         val station = StartupStation.resolve(repository)
+        // Unless it is still playing: a relaunch must not rebuffer a stream that never stopped.
+        val alreadyRunning = !RelaunchPolicy.shouldRestart(
+            requestedStationId = station.id,
+            currentStationId = currentStation?.id,
+            playWhenReady = playerManager.playWhenReady.value
+        )
+        if (alreadyRunning) return
         restartSilenceClock()
         currentStation = station
         repository.setLastStationId(station.id)

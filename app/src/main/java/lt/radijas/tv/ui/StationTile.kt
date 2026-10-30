@@ -97,14 +97,14 @@ fun StationTile(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(28.dp))
             .background(background)
             .border(
                 width = 3.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused
                 // surface: a white ring would be the plainest thing on a screen about colour.
                 color = if (isFocused) accent else Color.Transparent,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(28.dp)
             )
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -112,8 +112,7 @@ fun StationTile(
         Box(
             modifier = Modifier
                 .size(156.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color.Black.copy(alpha = 0.25f)),
+                .clip(RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center
         ) {
             Image(

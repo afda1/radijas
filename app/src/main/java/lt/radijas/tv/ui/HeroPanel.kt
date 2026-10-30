@@ -1,8 +1,11 @@
 package lt.radijas.tv.ui
 
+import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,19 +20,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -44,14 +51,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import lt.radijas.tv.R
 import lt.radijas.tv.data.model.RadioStation
+import lt.radijas.tv.player.AudioLevelState
 import lt.radijas.tv.ui.theme.HeroCoreX
 import lt.radijas.tv.ui.theme.HeroCoreY
 import lt.radijas.tv.ui.theme.HeroGlowRadiusX
 import lt.radijas.tv.ui.theme.HeroGlowRadiusY
 import lt.radijas.tv.ui.theme.RadijasContent
 import lt.radijas.tv.ui.theme.heroGlowStops
+import lt.radijas.tv.ui.theme.heroSurface
 
 /**
  * Display-only "now playing" hero.
@@ -114,7 +125,7 @@ fun HeroPanel(
                 // the glow behind it, so the mark needs no plate: the glow is its backdrop and
                 // the tile's brand colour is the only accent.
                 colorFilter = ColorFilter.tint(Color.White),
-                modifier = Modifier.size(168.dp)
+                modifier = Modifier.size(168.dp).testTag("hero-station-logo")
             )
         }
     }
@@ -123,7 +134,7 @@ fun HeroPanel(
 /**
  * Paints [heroSurface] behind the hero.
  *
- * The brush is a unit circle drawn through a translate + scale, which turns it into the ellipse
+ * The brush is a pixel-space circle scaled vertically, which turns it into the ellipse
  * [HeroGlowRadiusX]/[HeroGlowRadiusY] describe; that keeps the drawn pixels identical to the
  * fraction-space model the contrast test samples. The brush is built inside `drawWithCache`,
  * i.e. once per size and brand, not per recomposition.
@@ -131,20 +142,20 @@ fun HeroPanel(
 private fun heroGlowBackground(brand: Long): Modifier = Modifier.drawWithCache {
     val width = size.width
     val height = size.height
+    val center = Offset(HeroCoreX * width, HeroCoreY * height)
+    val radiusX = HeroGlowRadiusX * width
+    val radiusY = HeroGlowRadiusY * height
     val glow = Brush.radialGradient(
         *heroGlowStops(brand),
-        center = Offset.Zero,
-        radius = 1f
+        center = center,
+        radius = radiusX
     )
     onDrawBehind {
-        translate(left = HeroCoreX * width, top = HeroCoreY * height) {
-            scale(
-                scaleX = HeroGlowRadiusX * width,
-                scaleY = HeroGlowRadiusY * height,
-                pivot = Offset.Zero
-            ) {
-                drawRect(brush = glow, topLeft = Offset(-1f, -1f), size = Size(2f, 2f))
-            }
+        // The glow's rectangle must fade into the same tonal surface, not the page colour.
+        drawRect(heroSurface(brand, 0f, 0f))
+        // Pixel-space shader avoids precision artefacts from a one-pixel radial brush on TV GPUs.
+        scale(scaleX = 1f, scaleY = radiusY / radiusX, pivot = center) {
+            drawCircle(brush = glow, radius = radiusX, center = center)
         }
     }
 }
@@ -162,7 +173,7 @@ private val HeroNameLineHeight = 104.sp
  * The station name, at 96 sp whenever it fits the hero's text column.
  *
  * At 1080p that column is ~608 dp, and "Power Hit Radio Gold" is wider than that at 96 sp, so
- * a fixed size would ellipsise two of the ten stations to "Power Hit R…". Instead the name
+ * a fixed size would ellipsise two of the eleven stations to "Power Hit R…". Instead the name
  * steps down until it fits on one line: a smaller name is still the station's name, a cut one
  * is not. The floor is 48 sp, below which the ellipsis returns.
  */
@@ -257,23 +268,27 @@ private fun StatusLine(status: PlayerStatus) {
     }
 }
 
-/** Three static bars: the design's "live" mark. Static so the layout never moves. */
+/** Three recent PCM levels; the canvas has fixed bounds so the status copy never moves. */
 @Composable
 private fun EqualizerBars(active: Boolean) {
-    Row(
-        modifier = Modifier
-            .alpha(if (active) 1f else 0f)
-            .testTag("hero-equalizer"),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        listOf(10.dp, 18.dp, 7.dp).forEach { barHeight ->
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(barHeight)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(RadijasContent.copy(alpha = 0.85f))
+    val sample by AudioLevelState.levels.collectAsStateWithLifecycle()
+    var fresh by remember { mutableStateOf(false) }
+    LaunchedEffect(sample, active) {
+        fresh = active && SystemClock.elapsedRealtime() - sample.updatedAt < 300
+        delay(300)
+        fresh = false
+    }
+    val targets = sample.values.map { if (fresh && active) kotlin.math.sqrt(it.coerceIn(0f, 1f)) else 0f }
+    val first by animateFloatAsState(targets[0], tween(100), label = "level-1")
+    val second by animateFloatAsState(targets[1], tween(100), label = "level-2")
+    val third by animateFloatAsState(targets[2], tween(100), label = "level-3")
+    Canvas(Modifier.size(18.dp, 18.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
+        listOf(first, second, third).forEachIndexed { index, level ->
+            val barHeight = 3.dp.toPx() + (size.height - 3.dp.toPx()) * level
+            drawRoundRect(
+                color = RadijasContent.copy(alpha = 0.85f),
+                topLeft = Offset(index * 7.dp.toPx(), size.height - barHeight),
+                size = Size(4.dp.toPx(), barHeight), cornerRadius = CornerRadius(2.dp.toPx())
             )
         }
     }

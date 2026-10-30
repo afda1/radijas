@@ -20,6 +20,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.TeeAudioProcessor
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.LibraryResult
@@ -27,6 +31,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.LibraryParams
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionError
 import lt.radijas.tv.BuildConfig
 import lt.radijas.tv.MainActivity
 import lt.radijas.tv.R
@@ -53,6 +58,9 @@ class RadijasPlaybackService : MediaLibraryService() {
     private val retryDelaysMs = longArrayOf(1_000, 2_000, 4_000, 8_000, 15_000, 30_000)
     private var retryAttempt = 0
     private var retryJob: Job? = null
+    private val powerMetadata = PowerMetadataClient()
+    private var metadataJob: Job? = null
+    private var metadataStationId: String? = null
 
     // Elapsed-realtime timestamp of the last pause, used to jump back to the live edge on resume.
     private var pausedAtMs = 0L
@@ -109,7 +117,7 @@ class RadijasPlaybackService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             if (parentId != ROOT_ID) {
-                return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
+                return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
             }
             val items = repository.stations.map { it.toMediaItem(this@RadijasPlaybackService) }
             return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.copyOf(items), params))
@@ -121,7 +129,7 @@ class RadijasPlaybackService : MediaLibraryService() {
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> {
             val station = repository.stations.find { it.id == mediaId }
-                ?: return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
+                ?: return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
             return Futures.immediateFuture(LibraryResult.ofItem(station.toMediaItem(this@RadijasPlaybackService), null))
         }
 
@@ -152,6 +160,9 @@ class RadijasPlaybackService : MediaLibraryService() {
     }
 
     private val resiliencePlayerListener = object : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) {
+            syncPowerMetadata()
+        }
         override fun onPlaybackStateChanged(playbackState: Int) {
             val stateName = when (playbackState) {
                 Player.STATE_IDLE -> "IDLE"
@@ -176,6 +187,7 @@ class RadijasPlaybackService : MediaLibraryService() {
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             Log.d(TAG, if (isPlaying) "Playing" else "Not playing (paused/buffering/stopped)")
+            if (!isPlaying) AudioLevelState.clear()
         }
 
         /**
@@ -184,6 +196,8 @@ class RadijasPlaybackService : MediaLibraryService() {
          * never forwards metadata events to controllers (see [TrackTitleState]).
          */
         override fun onMetadata(metadata: Metadata) {
+            // These stations publish their current song via their website, not useful ICY data.
+            if (player.currentMediaItem?.mediaId in setOf("powerhit", "powerhitgold")) return
             val icy = metadata.getFirstEntryOfType(IcyInfo::class.java) ?: return
             Log.d(TAG, "ICY metadata: title=${icy.title}")
             val previous = TrackTitleState.title.value
@@ -204,6 +218,7 @@ class RadijasPlaybackService : MediaLibraryService() {
             // carrying the previous title over would show a wrong song while it connects.
             if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) {
                 TrackTitleState.clear()
+                AudioLevelState.clear()
             }
         }
 
@@ -238,6 +253,30 @@ class RadijasPlaybackService : MediaLibraryService() {
                 error
             )
             scheduleReconnect()
+        }
+    }
+
+    private fun syncPowerMetadata() {
+        val stationId = player.currentMediaItem?.mediaId
+            ?.takeIf { player.isPlaying && it in setOf("powerhit", "powerhitgold") }
+        if (stationId == metadataStationId && (stationId == null || metadataJob?.isActive == true)) return
+        metadataJob?.cancel()
+        metadataStationId = stationId
+        metadataJob = null
+        if (stationId == null) return
+        metadataJob = serviceScope.launch {
+            while (true) {
+                val title = powerMetadata.powerTitle(stationId)
+                if (player.currentMediaItem?.mediaId == stationId && player.isPlaying) {
+                    TrackTitleState.update(title)
+                    try {
+                        triggerNotificationUpdate()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Notification update failed", e)
+                    }
+                }
+                delay(20_000L)
+            }
         }
     }
 
@@ -305,7 +344,16 @@ class RadijasPlaybackService : MediaLibraryService() {
         val audioSessionId = audioManager?.generateAudioSessionId()?.takeIf { it != 0 }
             ?: C.AUDIO_SESSION_ID_UNSET
 
-        player = ExoPlayer.Builder(this)
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioOutputPlaybackParams: Boolean
+            ): AudioSink = DefaultAudioSink.Builder(context)
+                .setAudioProcessors(arrayOf(TeeAudioProcessor(LevelAudioBufferSink())))
+                .build()
+        }
+        player = ExoPlayer.Builder(this, renderers)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(httpDataSourceFactory))
             .setLoadControl(loadControl)
             .build()
@@ -390,6 +438,7 @@ class RadijasPlaybackService : MediaLibraryService() {
     override fun onDestroy() {
         retryJob?.cancel()
         serviceScope.cancel()
+        AudioLevelState.clear()
         networkCallback?.let { cb ->
             try { connectivityManager?.unregisterNetworkCallback(cb) } catch (_: Exception) {}
         }

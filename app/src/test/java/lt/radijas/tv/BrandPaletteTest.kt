@@ -50,7 +50,7 @@ class BrandPaletteTest {
 
     @Test
     fun `every station brand has readable text`() {
-        assertEquals("the catalogue must still have ten stations", 10, stationBrands.size)
+        assertEquals("the catalogue must still have eleven stations", 11, stationBrands.size)
         stationBrands.forEach { brand ->
             val contrast = contrastRatio(onBrand(brand), tonalSurface(brand, 0.34f))
             assertTrue("contrast $contrast for $brand", contrast >= 4.5)
