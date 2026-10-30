@@ -101,7 +101,7 @@ Emuliatorius šitam netinka: `onUserLeaveHint` ir screensaverio elgsena jame ski
 
 ## CI
 
-Šiuo metu CI nėra: repozitorijoje nėra `.github/workflows` failų, o `.gitea/` šablonai GitHub'e neveikia. Kol CI nėra, release negalimas be vietinės `testDebugUnitTest` eigos iš aukščiau esančios komandos. Kai CI bus įjungtas, release leidžiamas tik su žaliu CI — tai turi būti atskiras, aiškiai matomas vartas.
+Šiuo metu CI nėra: repozitorijoje nėra `.github/workflows` failų. Kol CI nėra, release negalimas be vietinės `testDebugUnitTest` eigos iš aukščiau esančios komandos. Kai CI bus įjungtas, release leidžiamas tik su žaliu CI; tai turi būti atskiras, aiškiai matomas vartas.
 
 ## Žyma ir publikavimas
 
