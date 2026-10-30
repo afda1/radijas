@@ -1,22 +1,28 @@
 <div align="center">
 
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="Radijas programėlės ikona" width="120">
+
 # Radijas
 
 **Įjungi ir groja.**
 
-Lietuviškas radijas tavo Android TV — vienas ekranas, 11 stočių ir jokio meniu.
+Lietuviškas radijas tavo Android TV: vienas ekranas, 11 stočių ir jokio meniu.
 
 </div>
 
 <img src="docs/screenshots/2026-10-30/13-m3-lietus.png" alt="Radijas televizoriaus ekrane: groja Lietus, apačioje matoma stočių lentyna" width="100%">
 
+| Android TV emuliatoriuje | Realiame televizoriuje |
+|---|---|
+| <img src="docs/screenshots/2026-10-30/15-m3-zip-fm.png" alt="ZIP FM groja Android TV emuliatoriuje" width="100%"> | <img src="docs/screenshots/2026-10-30/19-real-tv-ui.png" alt="European Hit Radio groja realiame televizoriuje" width="100%"> |
+
 ## Kam tai skirta?
 
-Pirmiausia savo tėvams — žmonėms, kurie nori įsijungti radiją televizoriuje nesukdami galvos dėl paskyrų, meniu ar nustatymų. Ir visiems kitiems, kuriems norisi tiesiog klausytis.
+Pirmiausia savo tėvams: žmonėms, kurie nori įsijungti radiją televizoriuje nesukdami galvos dėl paskyrų, meniu ar nustatymų. Ir visiems kitiems, kuriems norisi tiesiog klausytis.
 
 ## Ką gali?
 
-- **Iškart groja** paskutinę klausytą stotį; pirmą kartą — Lietus.
+- **Iškart groja** paskutinę klausytą stotį; pirmą kartą groja Lietus.
 - **11 lietuviškų stočių**, kurias lengva pasirinkti televizoriaus pultu.
 - **Automatiškai bando prisijungti iš naujo**, nutrūkus ryšiui.
 - **Rodo, kas groja**, kai stotis pateikia dainos informaciją.
@@ -25,7 +31,7 @@ Pirmiausia savo tėvams — žmonėms, kurie nori įsijungti radiją televizoriu
 
 ## Kodėl taip paprastai?
 
-Programėlė sukurta televizoriui ir valdymui pultu. Didelės, aiškios stotys, vienas ekranas ir jokio bereikalingo pasirinkimo — kad iki muzikos būtų kuo mažiau žingsnių. Nėra nustatymų, paieškos ar pauzės mygtuko: paprastumas čia yra sąmoningas sprendimas.
+Programėlė sukurta televizoriui ir valdymui pultu. Didelės, aiškios stotys, vienas ekranas ir jokio bereikalingo pasirinkimo padeda iki muzikos nueiti kuo mažiau žingsnių. Nėra nustatymų, paieškos ar pauzės mygtuko: paprastumas čia yra sąmoningas sprendimas.
 
 ## Kaip sukurta?
 
@@ -44,8 +50,8 @@ Norint sukurti iš kodo, reikia JDK 21 ir Android SDK su `platforms;android-37.0
 ./gradlew testDebugUnitTest
 ```
 
-Windows sistemoje naudok `gradlew.bat`. Išleidimo informacija — [RELEASING.md](RELEASING.md).
+Windows sistemoje naudok `gradlew.bat`. Išleidimo informacija: [RELEASING.md](RELEASING.md).
 
 ---
 
-Platinama pagal [GPL-3.0-only](LICENSE). Stočių pavadinimai ir ženklai priklauso jų savininkams; daugiau informacijos — [NOTICE](NOTICE).
+Platinama pagal [GPL-3.0-only](LICENSE). Stočių pavadinimai ir ženklai priklauso jų savininkams; daugiau informacijos: [NOTICE](NOTICE).
