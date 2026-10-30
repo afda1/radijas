@@ -200,7 +200,7 @@ Atmestas variantas B (paskutinė lentynos plytelė): būtų išsaugojęs vieną 
 | Pabudimo klavišas dar ir suveikia | Testuojama dviem lygiais: (1) gryna `ScreenOffPolicy` (repo šablonas `StopPolicy`/`RelaunchPolicy`) — DOWN/UP pora: pirmas paspaudimas sugeriamas ir būsena grąžinama UP momentu; (2) Compose testas — juodas sluoksnis ir užuomina atsiranda/išnyksta. **Ne** kuriama `createAndroidComposeRule<MainActivity>()` infrastruktūra: `MainActivity.onCreate` paleidžia srautą, o vieno klavišo sugerimas realiame pultelyje patikrinamas įrenginyje. |
 | `tv-material` `ColorScheme` neturi rolės, kurios reikia | Rolės sąrašas fiksuotas §7.2; jei trūksta — `tonalSurface` tik konkrečiam elementui, ne visai sistemai |
 | R8/release elgsena | `assembleRelease` + įdiegimas į TV (§10, 6 etapas) |
-| Google Play taisyklė TV-BA (audio-only neturėtų blokuoti Ambient Mode) | Sideload/F-Droid atveju negalioja. Jei kada eisime į Play — atskiras sprendimas prieš publikavimą, ne šio etapo dalis. |
+| Google Play taisyklė TV-BA (audio-only neturėtų blokuoti Ambient Mode) | Diegiant APK tiesiogiai negalioja. Jei kada eisime į Play — atskiras sprendimas prieš publikavimą, ne šio etapo dalis. |
 | Ekranas pajuodsta per procesų mirtį ir lieka juodas | Būsena **nesaugoma** už `rememberSaveable`; po procesų žūties grįžtama į šviesų ekraną. |
 | `FLAG_KEEP_SCREEN_ON` pamirštamas nuėmus sluoksnį | `DisposableEffect` + `onDispose` nuima vėliavą; testas tikrina, kad po pabudimo vėliavos nebėra. |
 

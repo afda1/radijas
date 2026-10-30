@@ -19,8 +19,8 @@ android {
     buildConfigField("String", "KOTLIN_VERSION", "\"${libs.versions.kotlin.get()}\"")
   }
 
-  // Release signing is applied only when a keystore is available, so anyone (including F-Droid,
-  // which signs with its own key) can build an unsigned release from a fresh clone.
+  // Release signing is applied only when a keystore is available, so anyone can build an
+  // unsigned release from a fresh clone.
   val releaseKeystore = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks")
   val canSignRelease = releaseKeystore.exists() && System.getenv("STORE_PASSWORD") != null
 
@@ -41,7 +41,7 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      // Keeps release builds reproducible (F-Droid).
+      // Keeps release builds reproducible.
       vcsInfo.include = false
       if (canSignRelease) signingConfig = signingConfigs.getByName("release")
     }

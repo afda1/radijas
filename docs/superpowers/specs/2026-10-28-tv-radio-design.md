@@ -13,7 +13,7 @@ Nesėkmė (net jei techniškai viskas veikia): reikia daugiau nei dviejų paspau
 ## 2. Kam
 
 - Pirma — mano tėvams, mano televizoriuje.
-- Jei pavyksta — nemokamai visiems, per F-Droid arba tiesioginį APK.
+- Jei pavyksta — nemokamai visiems, kaip tiesioginis APK.
 - Nieko kito: ne „visiems išmanantys“, ne jaunimui, ne telefonams.
 
 ## 3. Tikslai
