@@ -1,12 +1,19 @@
 package lt.radijas.tv
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.DisposableEffect
@@ -43,9 +50,21 @@ class MainActivity : ComponentActivity() {
     /** The black frame that replaces "screen off"; any remote key brings it back. */
     private var screenOff by mutableStateOf(false)
     private var hintVisible by mutableStateOf(false)
+    private val leaveGuard = LeavePlaybackGuard()
+    private val leaveHandler = Handler(Looper.getMainLooper())
+    private val dreamReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_DREAMING_STARTED) {
+                Log.d("RadioLeave", "Dream started; keep playback")
+                leaveGuard.onDreamStarted()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ContextCompat.registerReceiver(this, dreamReceiver, IntentFilter(Intent.ACTION_DREAMING_STARTED),
+            ContextCompat.RECEIVER_EXPORTED)
         screenOff = savedInstanceState?.getBoolean(KEY_SCREEN_OFF) ?: false
 
         repository = RadioRepository(this)
@@ -178,12 +197,25 @@ class MainActivity : ComponentActivity() {
         playerManager.playStation(station)
     }
 
+    override fun onResume() {
+        super.onResume()
+        leaveGuard.onResumed()
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        Log.d("RadioLeave", "User leave callback")
         if (StopPolicy.shouldStop(userLeftHint = true)) {
-            screenOff = false
-            playerManager.stop()
-            currentStation?.let { repository.setLastStationId(it.id) }
+            val token = leaveGuard.onUserLeave()
+            // Some TVs deliver onUserLeaveHint for DreamActivity. The protected dream broadcast
+            // can arrive before or after that callback; defer Home's stop and cancel it for dreams.
+            leaveHandler.postDelayed({
+                if (leaveGuard.shouldStop(token)) {
+                    screenOff = false
+                    playerManager.stop()
+                    currentStation?.let { repository.setLastStationId(it.id) }
+                }
+            }, LEAVE_GRACE_MS)
         }
     }
 
@@ -211,6 +243,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        leaveHandler.removeCallbacksAndMessages(null)
+        unregisterReceiver(dreamReceiver)
         if (isFinishing) {
             playerManager.stop()
         }
@@ -224,6 +258,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val SILENCE_TICK_MS = 1_000L
+        private const val LEAVE_GRACE_MS = 2_000L
         private const val SCREEN_OFF_HINT_MS = 2_500L
         private const val KEY_SCREEN_OFF = "lt.radijas.tv.extra.SCREEN_OFF"
 
