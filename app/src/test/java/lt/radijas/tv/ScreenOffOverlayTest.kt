@@ -29,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 class ScreenOffOverlayTest {
@@ -197,6 +198,44 @@ class ScreenOffOverlayTest {
             "orbit repeats cleanly across cycles",
             shifts[0],
             screenOffPixelShiftDp(baseMinuteMs + 16 * 60_000L)
+        )
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `long track title wraps up to two lines without shifting the clock`() {
+        val fixedNowMs = epochMs(2026, Calendar.NOVEMBER, 14, 18, 25)
+        var trackTitle by mutableStateOf<String?>(null)
+
+        composeTestRule.setContent {
+            RadijasTheme {
+                Box(Modifier.requiredSize(960.dp, 540.dp)) {
+                    ScreenOffOverlay(
+                        hintVisible = false,
+                        trackTitle = trackTitle,
+                        nowMs = { fixedNowMs }
+                    )
+                }
+            }
+        }
+
+        val initialTop = composeTestRule.onNodeWithTag("screen-off-clock")
+            .getUnclippedBoundsInRoot().top.value
+
+        composeTestRule.runOnUiThread {
+            trackTitle = "Atlikėjas ir dar vienas atlikėjas - labai ilgas kūrinio pavadinimas, kuris tikrai netelpa į vieną eilutę ir tęsiasi į antrą eilutę"
+        }
+        composeTestRule.waitForIdle()
+
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeTestRule.onNodeWithTag("screen-off-track")
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals("long title should use two lines", 2, layouts.single().lineCount)
+        assertEquals(
+            "clock must stay at fixed vertical position when subtitle wraps to two lines",
+            initialTop,
+            composeTestRule.onNodeWithTag("screen-off-clock").getUnclippedBoundsInRoot().top.value,
+            0.01f
         )
     }
 }

@@ -25,7 +25,8 @@ fun NowPlayingScreen(
     uiState: NowPlayingUiState,
     stations: List<RadioStation>,
     onSelect: (RadioStation) -> Unit,
-    onScreenOff: () -> Unit = {}
+    onScreenOff: () -> Unit = {},
+    nowMs: () -> Long = System::currentTimeMillis
 ) {
     val shelfFocus = remember { ShelfFocusState() }
     Column(
@@ -44,7 +45,8 @@ fun NowPlayingScreen(
             modifier = Modifier
                 .padding(horizontal = 48.dp)
                 .weight(1f)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            nowMs = nowMs
         )
         Spacer(Modifier.height(8.dp))
         StationShelf(

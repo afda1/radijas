@@ -44,7 +44,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -125,41 +127,53 @@ fun HeroPanel(
             // of a Column are the ones a short hero would squeeze to nothing.
             .padding(horizontal = 44.dp, vertical = 8.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                StationName(station.name)
-                Spacer(Modifier.height(2.dp))
-                TrackTitleLine(trackTitle)
-                Spacer(Modifier.height(2.dp))
-                StatusLine(status)
-                Spacer(Modifier.height(24.dp))
-                ScreenOffControl(onScreenOff, onNavigateDown)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    StationName(station.name)
+                    Spacer(Modifier.height(2.dp))
+                    TrackTitleLine(trackTitle)
+                    Spacer(Modifier.height(2.dp))
+                    StatusLine(status)
+                }
+                Spacer(Modifier.width(16.dp))
+                // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
+                val heroPainter = painterResource(station.iconResId)
+                val heroAspect = remember(heroPainter) { logoAspect(heroPainter) }
+                val heroLogoWidth = 168.dp * (stationLogoWidthFraction[station.id] ?: 1f)
+                Image(
+                    painter = heroPainter,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    // The logo is a white silhouette on transparency and the brand lives in the glow
+                    // behind it, so the mark needs no plate.
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier
+                        .size(width = heroLogoWidth, height = heroLogoWidth / heroAspect)
+                        .testTag("hero-station-logo")
+                )
             }
-            // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
-            val heroPainter = painterResource(station.iconResId)
-            val heroAspect = remember(heroPainter) { logoAspect(heroPainter) }
-            val heroLogoWidth = 168.dp * (stationLogoWidthFraction[station.id] ?: 1f)
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                // The logo is a white silhouette on transparency and the brand lives in the glow
-                // behind it, so the mark needs no plate.
-                colorFilter = ColorFilter.tint(Color.White),
-                modifier = Modifier
-                    .size(width = heroLogoWidth, height = heroLogoWidth / heroAspect)
-                    .testTag("hero-station-logo")
-            )
+            Spacer(Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ScreenOffControl(onScreenOff, onNavigateDown)
+                Spacer(Modifier.width(24.dp))
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    HeroClock(nowMs = nowMs)
+                }
+            }
         }
-        HeroClock(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 7.dp),
-            nowMs = nowMs
-        )
     }
 }
 
@@ -216,7 +230,7 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
 
     Row(
             modifier = Modifier
-                .offset(x = (-12).dp)
+                .offset(x = (-8).dp)
                 .heightIn(min = 44.dp)
                 .testTag("screen-off-button")
                 .onFocusChanged { isFocused = it.isFocused }
@@ -261,7 +275,7 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(8.dp))
             Image(
                 painter = painterResource(R.drawable.ic_screen_dark),
                 contentDescription = null,
@@ -276,7 +290,7 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.onSurface
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
         }
 }
 
@@ -340,11 +354,13 @@ private fun TrackTitleLine(trackTitle: String?) {
     // A fixed-height block that is composed in both cases: the empty state reserves exactly the
     // same 44 dp, so the station name and status line never move when a title arrives.
     BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth().height(44.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         val style = MaterialTheme.typography.headlineSmall
         val measurer = rememberTextMeasurer()
+        val fontScale = LocalDensity.current.fontScale
+        val availableWidth = constraints.maxWidth
         val title = trackTitle.orEmpty()
         val titleAlpha = remember { Animatable(1f) }
         var previousTitle by remember { mutableStateOf(title) }
@@ -359,10 +375,15 @@ private fun TrackTitleLine(trackTitle: String?) {
                 }
             }
         }
-        val textWidth = measurer.measure(
-            text = AnnotatedString(title), style = style, maxLines = 1, softWrap = false
-        ).size.width
-        val overflows = textWidth > constraints.maxWidth
+        val textWidth = remember(title, style, availableWidth, fontScale) {
+            measurer.measure(
+                text = AnnotatedString(title),
+                style = style,
+                maxLines = 1,
+                softWrap = false
+            ).size.width
+        }
+        val overflows = textWidth > availableWidth
         // Mask only the text layer, not the station-tinted background behind it.
         val fade = if (overflows) Modifier
             .testTag("hero-track-fade")
@@ -417,7 +438,9 @@ private fun StatusLine(status: PlayerStatus) {
             // Keep instructions readable when playback is not active.
             if (status != PlayerStatus.PLAYING) Text(
                 text = stringResource(status.textRes()),
-                modifier = Modifier.testTag("hero-status"),
+                modifier = Modifier
+                    .testTag("hero-status")
+                    .semantics { liveRegion = LiveRegionMode.Polite },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.84f),
                 maxLines = 1,

@@ -2,6 +2,7 @@ package lt.radijas.tv
 
 import android.content.Context
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,6 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 class HeroClockTest {
@@ -223,5 +225,40 @@ class HeroClockTest {
             clockTopPx + clockLayouts.single().firstBaseline,
             1.5f
         )
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `hero clock and screen-off control fit without overlapping at fontScale 1_3`() {
+        // Long Lithuanian weekday + month name ("Ketvirtadienis, rugpjūčio 27 d.").
+        val longDateMs = epochMs(2026, Calendar.AUGUST, 27, 18, 25)
+        val station = stations.first()
+
+        composeTestRule.setContent {
+            val baseDensity = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(density = baseDensity.density, fontScale = 1.3f)
+            ) {
+                RadijasTheme(stationId = station.id) {
+                    HeroPanel(
+                        station = station,
+                        status = PlayerStatus.PLAYING,
+                        modifier = Modifier.requiredSize(864.dp, 254.dp),
+                        nowMs = { longDateMs }
+                    )
+                }
+            }
+        }
+
+        val button = composeTestRule.onNodeWithTag("screen-off-button").getUnclippedBoundsInRoot()
+        val clock = composeTestRule.onNodeWithTag("hero-clock-container").getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "button right ${button.right} overlaps clock left ${clock.left} at fontScale 1.3",
+            clock.left.value - button.right.value >= 24f
+        )
+        assertTrue("clock right ${clock.right} exceeds 864.dp at fontScale 1.3", clock.right.value <= 864f)
+        assertTrue("clock bottom ${clock.bottom} exceeds 254.dp at fontScale 1.3", clock.bottom.value <= 254f)
+        assertTrue("button bottom ${button.bottom} exceeds 254.dp at fontScale 1.3", button.bottom.value <= 254f)
     }
 }

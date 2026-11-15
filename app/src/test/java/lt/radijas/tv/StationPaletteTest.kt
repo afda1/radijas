@@ -57,6 +57,12 @@ class StationPaletteTest {
                     compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.84f) to
                         glowOver(c.primaryContainer, c.surface)
                     ),
+                "hero date 74% on surface" to (compose(c.onSurface, c.surface, 0.74f) to c.surface),
+                "hero date 74% over bottom-right glow" to (
+                    compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.74f) to
+                        glowOver(c.primaryContainer, c.surface)
+                    ),
+                "hero clock 84% on surface" to (compose(c.onSurface, c.surface, 0.84f) to c.surface),
             )
             pairs.forEach { (name, pair) ->
                 val ratio = contrast(pair.first, pair.second)

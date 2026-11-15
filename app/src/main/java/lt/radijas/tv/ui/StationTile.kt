@@ -4,13 +4,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -126,14 +129,14 @@ fun StationTile(
             .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
             .border(
-                width = if (isFocused) 3.dp else 1.5.dp,
+                width = if (isFocused) 3.dp else 2.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused
                 // surface: a white ring would be the plainest thing on a screen about colour.
-                // When playing and unfocused, keep a quiet 1.5 dp tint so browsing the shelf
+                // When playing and unfocused, keep a quiet 2 dp tint so browsing the shelf
                 // never hides which station is currently on air.
                 color = when {
                     isFocused -> accent
-                    isPlaying -> accent.copy(alpha = 0.42f)
+                    isPlaying -> accent.copy(alpha = 0.65f)
                     else -> Color.Transparent
                 },
                 shape = MaterialTheme.shapes.extraLarge
@@ -161,17 +164,31 @@ fun StationTile(
             )
         }
         Spacer(Modifier.height(10.dp))
-        Text(
-            text = station.name,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = when {
-                isFocused -> FontWeight.SemiBold
-                isPlaying -> FontWeight.Medium
-                else -> FontWeight.Normal
-            },
-            color = labelColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (isPlaying) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(accent, CircleShape)
+                        .testTag("station-tile-playing-dot-${station.id}")
+                )
+            }
+            Text(
+                text = station.name,
+                modifier = Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = when {
+                    isFocused -> FontWeight.SemiBold
+                    isPlaying -> FontWeight.Medium
+                    else -> FontWeight.Normal
+                },
+                color = labelColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }

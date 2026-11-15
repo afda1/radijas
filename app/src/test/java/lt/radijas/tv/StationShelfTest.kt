@@ -3,7 +3,9 @@ package lt.radijas.tv
 import android.content.Context
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
@@ -11,6 +13,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -23,6 +26,7 @@ import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
 import lt.radijas.tv.ui.StationShelf
+import lt.radijas.tv.ui.StationTile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -211,5 +215,31 @@ class StationShelfTest {
         composeTestRule.onNodeWithTag("station-tile-goldfm")
             .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(goldLayouts) }
         assertEquals(FontWeight.SemiBold, goldLayouts.single().layoutInput.style.fontWeight)
+    }
+
+    @Test
+    fun `playing dot and full station name fit without ellipsis on every station`() {
+        var currentStation by mutableStateOf(stations.first())
+        composeTestRule.setContent {
+            StationTile(
+                station = currentStation,
+                isPlaying = true
+            )
+        }
+
+        stations.forEach { station ->
+            composeTestRule.runOnUiThread { currentStation = station }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("station-tile-playing-dot-${station.id}", useUnmergedTree = true)
+                .assertIsDisplayed()
+            val layouts = mutableListOf<TextLayoutResult>()
+            composeTestRule.onNodeWithTag("station-tile-${station.id}")
+                .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertTrue(
+                "${station.id} station name must not ellipsize next to playing dot",
+                !layouts.single().isLineEllipsized(0)
+            )
+        }
     }
 }

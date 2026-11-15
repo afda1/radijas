@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -114,8 +115,9 @@ fun ScreenOffOverlay(
             Spacer(Modifier.height(10.dp))
             Box(
                 modifier = Modifier
+                    .widthIn(max = 720.dp)
                     .fillMaxWidth()
-                    .height(44.dp),
+                    .height(84.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (subtitle != null) {
@@ -124,10 +126,12 @@ fun ScreenOffOverlay(
                         modifier = Modifier
                             .graphicsLayer { alpha = subtitleAlpha.value }
                             .testTag("screen-off-track"),
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        ),
                         color = onSurface.copy(alpha = 0.28f),
                         textAlign = TextAlign.Center,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

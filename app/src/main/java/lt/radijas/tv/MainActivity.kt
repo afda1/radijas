@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import lt.radijas.tv.data.model.RadioStation
@@ -121,18 +124,26 @@ class MainActivity : ComponentActivity() {
                         hintVisible = false
                     }
                 }
+                BackHandler(enabled = screenOff) { screenOff = false }
                 Box(Modifier.fillMaxSize()) {
-                    currentStation?.let { selectedStation ->
-                        NowPlayingScreen(
-                            uiState = NowPlayingUiState(
-                                station = selectedStation,
-                                status = status,
-                                trackTitle = trackTitle
-                            ),
-                            stations = repository.stations,
-                            onSelect = onSelect,
-                            onScreenOff = { screenOff = true }
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .focusProperties { canFocus = !screenOff }
+                            .then(if (screenOff) Modifier.clearAndSetSemantics { } else Modifier)
+                    ) {
+                        currentStation?.let { selectedStation ->
+                            NowPlayingScreen(
+                                uiState = NowPlayingUiState(
+                                    station = selectedStation,
+                                    status = status,
+                                    trackTitle = trackTitle
+                                ),
+                                stations = repository.stations,
+                                onSelect = onSelect,
+                                onScreenOff = { screenOff = true }
+                            )
+                        }
                     }
                     if (screenOff) {
                         ScreenOffOverlay(
@@ -234,7 +245,7 @@ class MainActivity : ComponentActivity() {
      */
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
-        when (screenOffAction(event.action, screenOff)) {
+        when (screenOffAction(event.action, screenOff, event.keyCode)) {
             ScreenOffAction.PASS -> super.dispatchKeyEvent(event)
             ScreenOffAction.CONSUME -> true
             ScreenOffAction.CONSUME_AND_WAKE -> {

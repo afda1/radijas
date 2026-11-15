@@ -24,4 +24,16 @@ class ScreenOffPolicyTest {
         assertEquals(PASS, screenOffAction(KeyEvent.ACTION_DOWN, screenOff = false))
         assertEquals(PASS, screenOffAction(KeyEvent.ACTION_UP, screenOff = false))
     }
+
+    @Test
+    fun `volume and mute keys pass through without waking the black screen`() {
+        listOf(
+            KeyEvent.KEYCODE_VOLUME_UP,
+            KeyEvent.KEYCODE_VOLUME_DOWN,
+            KeyEvent.KEYCODE_VOLUME_MUTE
+        ).forEach { keyCode ->
+            assertEquals(PASS, screenOffAction(KeyEvent.ACTION_DOWN, screenOff = true, keyCode = keyCode))
+            assertEquals(PASS, screenOffAction(KeyEvent.ACTION_UP, screenOff = true, keyCode = keyCode))
+        }
+    }
 }

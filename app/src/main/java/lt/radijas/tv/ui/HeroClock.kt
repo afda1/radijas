@@ -25,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -154,11 +156,17 @@ internal fun HeroClock(
             Text(
                 text = clockDate.date,
                 modifier = Modifier
+                    .weight(1f, fill = false)
                     .alignByBaseline()
                     .testTag("hero-date"),
-                style = MaterialTheme.typography.labelLarge.copy(platformStyle = noFontPad),
-                color = colors.onSurface.copy(alpha = 0.66f),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 20.sp,
+                    lineHeight = 26.sp,
+                    platformStyle = noFontPad
+                ),
+                color = colors.onSurface.copy(alpha = 0.74f),
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 softWrap = false
             )
             Spacer(Modifier.width(10.dp))
