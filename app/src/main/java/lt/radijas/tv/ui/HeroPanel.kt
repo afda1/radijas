@@ -2,6 +2,7 @@ package lt.radijas.tv.ui
 
 import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,7 +99,8 @@ fun HeroPanel(
     trackTitle: String? = null,
     onScreenOff: () -> Unit = {},
     onNavigateDown: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    nowMs: () -> Long = System::currentTimeMillis
 ) {
     val colors = MaterialTheme.colorScheme
     // Remembered, not rebuilt: the hero recomposes on every status and track tick, and a new
@@ -151,6 +154,12 @@ fun HeroPanel(
                     .testTag("hero-station-logo")
             )
         }
+        HeroClock(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 7.dp),
+            nowMs = nowMs
+        )
     }
 }
 
@@ -207,6 +216,7 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
 
     Row(
             modifier = Modifier
+                .offset(x = (-12).dp)
                 .heightIn(min = 44.dp)
                 .testTag("screen-off-button")
                 .onFocusChanged { isFocused = it.isFocused }
@@ -256,7 +266,9 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
                 painter = painterResource(R.drawable.ic_screen_dark),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(colors.primary),
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(24.dp)
+                    .testTag("screen-off-icon")
             )
             Spacer(Modifier.width(8.dp))
             Text(
@@ -334,6 +346,19 @@ private fun TrackTitleLine(trackTitle: String?) {
         val style = MaterialTheme.typography.headlineSmall
         val measurer = rememberTextMeasurer()
         val title = trackTitle.orEmpty()
+        val titleAlpha = remember { Animatable(1f) }
+        var previousTitle by remember { mutableStateOf(title) }
+        LaunchedEffect(title) {
+            if (title != previousTitle) {
+                previousTitle = title
+                if (title.isNotEmpty()) {
+                    titleAlpha.snapTo(0.15f)
+                    titleAlpha.animateTo(1f, tween(durationMillis = 200))
+                } else {
+                    titleAlpha.snapTo(1f)
+                }
+            }
+        }
         val textWidth = measurer.measure(
             text = AnnotatedString(title), style = style, maxLines = 1, softWrap = false
         ).size.width
@@ -361,13 +386,17 @@ private fun TrackTitleLine(trackTitle: String?) {
             key(trackTitle) {
                 Text(
                     text = title,
-                    modifier = Modifier.testTag("hero-track-title").basicMarquee(
-                        iterations = Int.MAX_VALUE,
-                        initialDelayMillis = 2_000,
-                        repeatDelayMillis = 2_000,
-                        spacing = MarqueeSpacing(48.dp),
-                        velocity = 25.dp
-                    ).then(if (overflows) Modifier.padding(horizontal = 20.dp) else Modifier),
+                    modifier = Modifier
+                        .graphicsLayer { alpha = titleAlpha.value }
+                        .testTag("hero-track-title")
+                        .basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            initialDelayMillis = 2_000,
+                            repeatDelayMillis = 2_000,
+                            spacing = MarqueeSpacing(48.dp),
+                            velocity = 25.dp
+                        )
+                        .then(if (overflows) Modifier.padding(horizontal = 20.dp) else Modifier),
                     style = style,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
                     maxLines = 1,

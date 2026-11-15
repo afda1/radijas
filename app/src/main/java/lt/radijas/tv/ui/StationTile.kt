@@ -126,10 +126,16 @@ fun StationTile(
             .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
             .border(
-                width = 3.dp,
+                width = if (isFocused) 3.dp else 1.5.dp,
                 // The ring is the brand itself, lightened until it is readable on the focused
                 // surface: a white ring would be the plainest thing on a screen about colour.
-                color = if (isFocused) accent else Color.Transparent,
+                // When playing and unfocused, keep a quiet 1.5 dp tint so browsing the shelf
+                // never hides which station is currently on air.
+                color = when {
+                    isFocused -> accent
+                    isPlaying -> accent.copy(alpha = 0.42f)
+                    else -> Color.Transparent
+                },
                 shape = MaterialTheme.shapes.extraLarge
             )
             .padding(10.dp),
@@ -143,7 +149,7 @@ fun StationTile(
         Box(
             modifier = Modifier
                 .size(156.dp)
-                .clip(RoundedCornerShape(20.dp)),
+                .clip(RoundedCornerShape(18.dp)),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -158,7 +164,11 @@ fun StationTile(
         Text(
             text = station.name,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = if (isFocused) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = when {
+                isFocused -> FontWeight.SemiBold
+                isPlaying -> FontWeight.Medium
+                else -> FontWeight.Normal
+            },
             color = labelColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

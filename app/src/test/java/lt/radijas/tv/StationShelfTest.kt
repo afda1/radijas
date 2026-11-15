@@ -17,6 +17,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.data.repository.RadioRepository
@@ -190,5 +192,24 @@ class StationShelfTest {
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, playingLabel))
         composeTestRule.onNodeWithTag("station-tile-goldfm")
             .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.StateDescription))
+    }
+
+    @Test
+    fun `unfocused playing tile keeps medium label weight while focused other tile uses semibold`() {
+        composeTestRule.setContent {
+            StationShelf(stations, playingId = "ehr", onSelect = {})
+        }
+        composeTestRule.onNodeWithTag("station-tile-ehr").performKeyInput { pressKey(Key.DirectionRight) }
+        composeTestRule.onNodeWithTag("station-tile-goldfm").assertIsFocused()
+
+        val ehrLayouts = mutableListOf<TextLayoutResult>()
+        composeTestRule.onNodeWithTag("station-tile-ehr")
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(ehrLayouts) }
+        assertEquals(FontWeight.Medium, ehrLayouts.single().layoutInput.style.fontWeight)
+
+        val goldLayouts = mutableListOf<TextLayoutResult>()
+        composeTestRule.onNodeWithTag("station-tile-goldfm")
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(goldLayouts) }
+        assertEquals(FontWeight.SemiBold, goldLayouts.single().layoutInput.style.fontWeight)
     }
 }

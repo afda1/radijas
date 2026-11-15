@@ -134,7 +134,13 @@ class MainActivity : ComponentActivity() {
                             onScreenOff = { screenOff = true }
                         )
                     }
-                    if (screenOff) ScreenOffOverlay(hintVisible = hintVisible)
+                    if (screenOff) {
+                        ScreenOffOverlay(
+                            hintVisible = hintVisible,
+                            trackTitle = trackTitle,
+                            stationName = currentStation?.name
+                        )
+                    }
                 }
             }
         }
