@@ -1,6 +1,6 @@
 # Būsena
 
-Atnaujinta: 2026-10-30 (paskutinė testų ir lint patikra — 17:39)
+Atnaujinta: 2026-11-15 (paskutinė testų ir lint patikra — 125 testai, 0 klaidų, 0 lint klaidų)
 
 Šis failas skirtas tam, kas tęsia darbus po pertraukos arba kitoje mašinoje. README pasakoja, kas tai per programa. Čia surašyta, kas padaryta, kas liko ir kokie sprendimai dar nepriimti.
 
@@ -28,8 +28,10 @@ Atnaujinta: 2026-10-30 (paskutinė testų ir lint patikra — 17:39)
 - **Logotipų optinė normalizacija (2026-10-30):** stoties ženklas nebėra tempiasi į 156 dp kvadratą. `ui/theme/StationLogoScale.kt` laiko vieno ženklo pločio dalį; wordmark'ai (EHR, Gold FM, Lietus, Relax, Rock, ZIP) lieka per visą plotį, o tankūs kompaktiški ženklai mažinami (M-1 Plius 0,71, M-1 0,80, PHR Gold 0,83, RC 0,84, Power Hit 0,93), kol jų „rašalo" plotas siekia ~4200 dp². `StationLogoScaleTest` perskaičiuoja tai iš PNG, tad lentelė negali savaime išsiderinti.
 - **Hallmark audito restyle (2026-10-30):** tipografinė skalė perkelta į temą ir apversta hierarchija ištaisyta — stoties vardas 96→64 sp, daina 26→32 sp, būsena 24→28 sp, plytelės etiketė 16→18 sp, plytelė 176→200 dp; „Ekranas" nefokusuotas nebėra piliulė (tik glyph), o fokusuotas rodo užrašą. Juodas ekrano kadras gavo `ScreenOffBlack` tokeną. Pridėtas kontrolės glyph'o kontrasto testas (4.67:1). Įrašyta dizaino dokumente §12.
 - **Plytelių žymėjimas ir fokuso grįžimas (2026-10-30):** pašalinta grojimo juosta nuo plytelės (lieka fokuso rėmelis); „Ekranas" → atgal `↓` grąžina į tą pačią plytelę, kurią palikai (`ShelfFocusState` + scroll + focus; testas `HeroPanelTest`).
-- Testų būsena (2026-10-30 18:25): **99 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), lint **0 klaidų / 31 įspėjimas**. Iš jų 18 nauji: `PlayerStateMappingTest` (8), `StationSelectionTest` (6), `PlayerStatusTest` (+2), `StationShelfTest` (+2 accessibility). Ankstesnis 78 testų skaičius yra to paties dokumento istorija (žr. `docs/2026-10-30-radio-update.md` įžangą).
-- Po viršelių pašalinimo Java 21 patikra: 78 testai praeina, debug APK susirenka, lint — 0 klaidų / 31 įspėjimas (to meto skaičius; dabar — 96, žr. aukščiau). Išsamūs įrodymai ir screenshotai — `docs/2026-10-30-radio-update.md` ir `docs/screenshots/2026-10-30/`.
+- **Laikrodis, data ir užtemdyto ekrano indikatorius (2026-11-15):** pagrindiniame hero ekrane (`ui/HeroClock.kt`, `ui/HeroPanel.kt`) rodoma 24 val. laikas (`tnum`) ir lietuviška data apatinėje eilutėje šalia „Patamsinti ekraną" (patikrinta ir su `fontScale = 1.3f`); mygtuko ikona optiškai sulygiuota su kairiuoju hero stulpeliu; kūrinių kaitai pridėtas `200 ms` skaidrumo perėjimas.
+- **Patamsinto ekrano naktinis vaizdas ir OLED apsauga (2026-11-15):** `ui/ScreenOffOverlay.kt` juodame fone blankiai rodo laiką ir grojamą kūrinį (iki 2 eilučių; be meta — stoties pavadinimą), o visas turinys kas minutę švelniai pasislenka (`screenOffPixelShiftDp`, ±6 dp × ±4 dp).
+- **Android TV elgsena, prieinamumas ir plytelių žymėjimas (2026-11-15):** pridėtas `BackHandler(enabled = screenOff)` (`MainActivity.kt`), `VOLUME_UP`/`VOLUME_DOWN`/`VOLUME_MUTE` praleidžiami neatjungiant tamsaus ekrano (`ScreenOffPolicy.kt`), foninis UI paslepiamas nuo fokuso ir TalkBack kol ekranas užtemdytas, būsenos tekstams įjungtas `LiveRegionMode.Polite`, o grojanti nefokusuota `StationTile` rodo 2 dp rėmelį ir taškelį šalia pavadinimo.
+- Testų būsena (2026-11-15): **24 testų rinkiniai, 125 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), Android Lint **0 klaidų / 31 esamas įspėjimas**. Dabartinės 1920×1080 ekrano nuotraukos atnaujintos `docs/screenshots/current/`. (Ankstesnis 2026-10-30 etapas turėjo 99 testus; žr. `docs/2026-10-30-radio-update.md`.)
 - README, ekrano nuotraukos, logotipas, TV baneris, AI autorystės disclosure.
 - Išvalyta prieš išleidimą: pašalintas ekvalaizerio kodas, nenaudojami piešiniai, `Coil`, `material3`, `viewmodel-compose`, `roborazzi`, instrumentation testų priklausomybės ir visi `Fogwave` pavadinimai kode (`RadijasPlaybackService`, `Theme.Radijas`, `radijas_prefs`).
 
