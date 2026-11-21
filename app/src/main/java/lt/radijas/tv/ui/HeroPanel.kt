@@ -23,11 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,9 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -81,9 +78,6 @@ import androidx.tv.material3.Text
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import lt.radijas.tv.R
-import lt.radijas.tv.ui.theme.ControlTint
-import lt.radijas.tv.ui.theme.logoAspect
-import lt.radijas.tv.ui.theme.stationLogoWidthFraction
 import lt.radijas.tv.data.model.RadioStation
 import lt.radijas.tv.player.AudioLevelState
 
@@ -117,62 +111,35 @@ fun HeroPanel(
             .testTag("hero-panel")
             .clip(MaterialTheme.shapes.extraLarge)
             // The hero is a tinted version of the station surface, never a flat brand slab: a
-            // radial glow whose core sits under the station icon and fades out before it reaches
-            // the text column.
+            // subtle tonal border separates it cleanly from the dark page while a wide radial
+            // glow washes gently across the upper-right clock corner.
             .then(heroBackground)
-            // The hero is height-starved at 1080p: a 540 dp-tall screen gives it ~242 dp, so the
-            // 96 sp name, the fixed 26 sp track block and the status line have to share ~202 dp.
-            // The redundant „Radijas" eyebrow was removed to buy the status line its size (it is
-            // the copy an elderly user has to read to fix a silent radio), and the later children
-            // of a Column are the ones a short hero would squeeze to nothing.
-            .padding(horizontal = 44.dp, vertical = 8.dp)
+            .border(
+                width = 1.dp,
+                color = colors.onSurface.copy(alpha = 0.08f),
+                shape = MaterialTheme.shapes.extraLarge
+            )
+            .padding(horizontal = 44.dp, vertical = 16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     StationName(station.name)
                     Spacer(Modifier.height(2.dp))
                     TrackTitleLine(trackTitle)
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(8.dp))
                     StatusLine(status)
                 }
-                Spacer(Modifier.width(16.dp))
-                // Same optical normalisation as the tiles, scaled to the hero's 168 dp slot.
-                val heroPainter = painterResource(station.iconResId)
-                val heroAspect = remember(heroPainter) { logoAspect(heroPainter) }
-                val heroLogoWidth = 168.dp * (stationLogoWidthFraction[station.id] ?: 1f)
-                Image(
-                    painter = heroPainter,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    // The logo is a white silhouette on transparency and the brand lives in the glow
-                    // behind it, so the mark needs no plate.
-                    colorFilter = ColorFilter.tint(Color.White),
-                    modifier = Modifier
-                        .size(width = heroLogoWidth, height = heroLogoWidth / heroAspect)
-                        .testTag("hero-station-logo")
-                )
-            }
-            Spacer(Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ScreenOffControl(onScreenOff, onNavigateDown)
                 Spacer(Modifier.width(24.dp))
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    HeroClock(nowMs = nowMs)
-                }
+                HeroClock(nowMs = nowMs)
             }
+            ScreenOffControl(onScreenOff, onNavigateDown)
         }
     }
 }
@@ -185,11 +152,11 @@ fun HeroPanel(
  * fraction-space model the contrast test samples. The brush is built inside `drawWithCache`,
  * i.e. once per size and brand, not per recomposition.
  */
-/** Where the glow's core sits, as fractions of the hero box: under the station icon. */
-private const val HeroCoreX = 0.90f
-private const val HeroCoreY = 0.44f
-private const val HeroGlowRadiusX = 0.22f
-private const val HeroGlowRadiusY = 0.62f
+/** Where the glow's core sits, as fractions of the hero box: top-right ambient wash. */
+private const val HeroCoreX = 0.88f
+private const val HeroCoreY = 0.28f
+private const val HeroGlowRadiusX = 0.42f
+private const val HeroGlowRadiusY = 0.85f
 
 /**
  * Paints the station glow behind the hero: the station's primary container at three alphas over
@@ -203,9 +170,9 @@ private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier
     val radiusY = HeroGlowRadiusY * height
     val glow = Brush.radialGradient(
         colors = listOf(
-            tint.copy(alpha = 0.55f),
-            tint.copy(alpha = 0.24f),
-            tint.copy(alpha = 0.035f)
+            tint.copy(alpha = 0.44f),
+            tint.copy(alpha = 0.18f),
+            tint.copy(alpha = 0.0f)
         ),
         center = center,
         radius = radiusX
@@ -220,7 +187,8 @@ private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier
 }
 
 /**
- * The screen-darkening control has a permanent label and a visible D-pad focus ring.
+ * Google TV pill control for darkening the screen, with a quiet tonal surface at rest and a
+ * high-contrast primary fill when focused.
  */
 @Composable
 private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
@@ -229,69 +197,67 @@ private fun ScreenOffControl(onClick: () -> Unit, onNavigateDown: () -> Unit) {
     var isFocused by remember { mutableStateOf(false) }
 
     Row(
+        modifier = Modifier
+            .heightIn(min = 44.dp)
+            .testTag("screen-off-button")
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                onClick(label = actionLabel) {
+                    onClick()
+                    true
+                }
+            }
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown &&
+                    event.nativeKeyEvent.repeatCount == 0 &&
+                    event.key == Key.DirectionDown
+                ) {
+                    // Down returns to the station the user came from, not to whatever tile
+                    // sits under this control's x position.
+                    onNavigateDown()
+                    true
+                } else if (event.type == KeyEventType.KeyUp &&
+                    (event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter)
+                ) {
+                    // Fire on release: turning the black frame on during the DOWN would let
+                    // the same press's UP wake the screen again.
+                    onClick()
+                    true
+                } else {
+                    false
+                }
+            }
+            .clip(CircleShape)
+            .background(
+                if (isFocused) colors.primary
+                else colors.onSurface.copy(alpha = 0.08f)
+            )
+            .border(
+                width = 1.dp,
+                color = if (isFocused) Color.Transparent else colors.onSurface.copy(alpha = 0.10f),
+                shape = CircleShape
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(16.dp))
+        Image(
+            painter = painterResource(R.drawable.ic_screen_dark),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(if (isFocused) colors.onPrimary else colors.primary),
             modifier = Modifier
-                .offset(x = (-8).dp)
-                .heightIn(min = 44.dp)
-                .testTag("screen-off-button")
-                .onFocusChanged { isFocused = it.isFocused }
-                .focusable()
-                .semantics(mergeDescendants = true) {
-                    role = Role.Button
-                    onClick(label = actionLabel) {
-                        onClick()
-                        true
-                    }
-                }
-                .onKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown &&
-                        event.nativeKeyEvent.repeatCount == 0 &&
-                        event.key == Key.DirectionDown
-                    ) {
-                        // Down returns to the station the user came from, not to whatever tile
-                        // sits under this control's x position.
-                        onNavigateDown()
-                        true
-                    } else if (event.type == KeyEventType.KeyUp &&
-                        (event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter)
-                    ) {
-                        // Fire on release: turning the black frame on during the DOWN would let
-                        // the same press's UP wake the screen again.
-                        onClick()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                .clip(MaterialTheme.shapes.small)
-                // Keep the control quiet until focused, then show its background and border.
-                .background(
-                    if (isFocused) lerp(colors.surfaceVariant, colors.primary, ControlTint)
-                    else Color.Transparent
-                )
-                .border(
-                    width = 3.dp,
-                    color = if (isFocused) colors.border else Color.Transparent,
-                    shape = MaterialTheme.shapes.small
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Spacer(Modifier.width(8.dp))
-            Image(
-                painter = painterResource(R.drawable.ic_screen_dark),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(colors.primary),
-                modifier = Modifier
-                    .size(24.dp)
-                    .testTag("screen-off-icon")
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.screen_off_button),
-                style = MaterialTheme.typography.labelLarge,
-                color = colors.onSurface
-            )
-            Spacer(Modifier.width(10.dp))
-        }
+                .size(22.dp)
+                .testTag("screen-off-icon")
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.screen_off_button),
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isFocused) colors.onPrimary else colors.onSurface
+        )
+        Spacer(Modifier.width(18.dp))
+    }
 }
 
 /** Largest hero-name size; comes from the theme's displayLarge. */
@@ -316,9 +282,9 @@ private fun StationName(name: String) {
     )
     BoxWithConstraints(
         // A fixed band, like the track block: a station whose name steps down must not shift
-        // the status line. 76 dp is the 64 sp name's natural line box; heightIn lets a larger
+        // the status line. 70 dp is the 64 sp name's tight line box; heightIn lets a larger
         // system font scale grow the band instead of painting the name over the track line.
-        modifier = Modifier.heightIn(min = 76.dp),
+        modifier = Modifier.heightIn(min = 70.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         val measurer = rememberTextMeasurer()
@@ -351,10 +317,10 @@ private fun StationName(name: String) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TrackTitleLine(trackTitle: String?) {
-    // A fixed-height block that is composed in both cases: the empty state reserves exactly the
-    // same 44 dp, so the station name and status line never move when a title arrives.
+    // A fixed-height block that is composed in both cases: the empty state reserves the
+    // headlineSmall line box so the station name and status line never move when a title arrives.
     BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 38.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         val style = MaterialTheme.typography.headlineSmall
@@ -384,22 +350,24 @@ private fun TrackTitleLine(trackTitle: String?) {
             ).size.width
         }
         val overflows = textWidth > availableWidth
-        // Mask only the text layer, not the station-tinted background behind it.
+        // Mask only the right edge so overflowing track titles remain flush-left aligned with the
+        // station name and equalizer column.
         val fade = if (overflows) Modifier
             .testTag("hero-track-fade")
             .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
             .drawWithContent {
                 drawContent()
-                val edge = minOf(20.dp.toPx(), size.width / 2f)
+                val edge = minOf(28.dp.toPx(), size.width / 2f)
                 if (edge > 0f) {
                     drawRect(
-                        brush = Brush.horizontalGradient(listOf(Color.Transparent, Color.Black), endX = edge),
-                        size = Size(edge, size.height), blendMode = BlendMode.DstIn
-                    )
-                    drawRect(
-                        brush = Brush.horizontalGradient(listOf(Color.Black, Color.Transparent), startX = size.width - edge, endX = size.width),
+                        brush = Brush.horizontalGradient(
+                            listOf(Color.Black, Color.Transparent),
+                            startX = size.width - edge,
+                            endX = size.width
+                        ),
                         topLeft = Offset(size.width - edge, 0f),
-                        size = Size(edge, size.height), blendMode = BlendMode.DstIn
+                        size = Size(edge, size.height),
+                        blendMode = BlendMode.DstIn
                     )
                 }
             } else Modifier
@@ -416,10 +384,9 @@ private fun TrackTitleLine(trackTitle: String?) {
                             repeatDelayMillis = 2_000,
                             spacing = MarqueeSpacing(48.dp),
                             velocity = 25.dp
-                        )
-                        .then(if (overflows) Modifier.padding(horizontal = 20.dp) else Modifier),
+                        ),
                     style = style,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.74f),
                     maxLines = 1,
                     softWrap = false
                 )
@@ -466,14 +433,14 @@ private fun EqualizerBars(active: Boolean) {
     val second by animateFloatAsState(targets[1], tween(100), label = "level-2")
     val third by animateFloatAsState(targets[2], tween(100), label = "level-3")
     // Read outside the draw lambda: a Canvas draw scope is not a composable context.
-    val barColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-    Canvas(Modifier.size(44.dp, 32.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
+    val barColor = MaterialTheme.colorScheme.primary
+    Canvas(Modifier.size(28.dp, 22.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
         listOf(first, second, third).forEachIndexed { index, level ->
-            val barHeight = 3.dp.toPx() + (size.height - 3.dp.toPx()) * level
+            val barHeight = 4.dp.toPx() + (size.height - 4.dp.toPx()) * level
             drawRoundRect(
                 color = barColor,
-                topLeft = Offset(index * 15.dp.toPx(), size.height - barHeight),
-                size = Size(10.dp.toPx(), barHeight), cornerRadius = CornerRadius(5.dp.toPx())
+                topLeft = Offset(index * 11.dp.toPx(), size.height - barHeight),
+                size = Size(6.dp.toPx(), barHeight), cornerRadius = CornerRadius(3.dp.toPx())
             )
         }
     }

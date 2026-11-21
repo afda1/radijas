@@ -22,34 +22,39 @@ class NowPlayingScreenTest {
     @get:Rule val compose = createComposeRule()
     private val station = RadioRepository(ApplicationProvider.getApplicationContext<Context>()).stations.first()
 
-    @Test fun `hero always shows station logo`() {
+    @Test fun `hero omits duplicate station logo and shows clock and date instead`() {
         compose.setContent { HeroPanel(station, PlayerStatus.PLAYING, modifier = Modifier.requiredSize(864.dp, 260.dp)) }
-        compose.onNodeWithTag("hero-station-logo").assertExists()
+        compose.onNodeWithTag("hero-station-logo").assertDoesNotExist()
         compose.onNodeWithTag("hero-album-art").assertDoesNotExist()
+        compose.onNodeWithTag("hero-clock").assertExists()
+        compose.onNodeWithTag("hero-date").assertExists()
     }
 
-    @Test fun `song and playback state changes keep the station logo at the same size`() {
+    @Test fun `song and playback state changes keep the hero clock at the same position and size`() {
         val title = mutableStateOf<String?>(null)
         val status = mutableStateOf(PlayerStatus.CONNECTING)
         compose.setContent {
             HeroPanel(station, status.value, trackTitle = title.value, modifier = Modifier.requiredSize(864.dp, 260.dp))
         }
-        var expectedWidth = 0f
-        var expectedHeight = 0f
+        var expectedLeft = 0f
+        var expectedTop = 0f
+        var expectedRight = 0f
+        var expectedBottom = 0f
         PlayerStatus.entries.forEachIndexed { index, candidate ->
             compose.runOnIdle { title.value = "Taylor Swift - Shake It Off"; status.value = candidate }
-            compose.onNodeWithTag("hero-station-logo").assertExists()
+            compose.onNodeWithTag("hero-station-logo").assertDoesNotExist()
             compose.onNodeWithTag("hero-album-art").assertDoesNotExist()
-            val bounds = compose.onNodeWithTag("hero-station-logo").getUnclippedBoundsInRoot()
-            val width = (bounds.right - bounds.left).value
-            val height = (bounds.bottom - bounds.top).value
+            val bounds = compose.onNodeWithTag("hero-clock-container").getUnclippedBoundsInRoot()
             if (index == 0) {
-                // The logic stays out of the markup; only the geometry must not move between states.
-                expectedWidth = width
-                expectedHeight = height
+                expectedLeft = bounds.left.value
+                expectedTop = bounds.top.value
+                expectedRight = bounds.right.value
+                expectedBottom = bounds.bottom.value
             }
-            org.junit.Assert.assertEquals(expectedWidth, width, 0.01f)
-            org.junit.Assert.assertEquals(expectedHeight, height, 0.01f)
+            org.junit.Assert.assertEquals(expectedLeft, bounds.left.value, 0.01f)
+            org.junit.Assert.assertEquals(expectedTop, bounds.top.value, 0.01f)
+            org.junit.Assert.assertEquals(expectedRight, bounds.right.value, 0.01f)
+            org.junit.Assert.assertEquals(expectedBottom, bounds.bottom.value, 0.01f)
         }
     }
 }

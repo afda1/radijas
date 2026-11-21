@@ -15,8 +15,10 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.test.core.app.ApplicationProvider
 import java.util.Calendar
 import java.util.TimeZone
@@ -60,10 +62,10 @@ class HeroClockTest {
     fun `formats Lithuanian weekday, genitive month, day and 24h time`() {
         val vilnius = TimeZone.getTimeZone("Europe/Vilnius")
 
-        assertEquals(
-            ClockDateText(time = "18:25", date = "Šeštadienis, lapkričio 14 d."),
-            formatClockDate(epochMs(2026, Calendar.NOVEMBER, 14, 18, 25, vilnius), vilnius)
-        )
+        val nov14 = formatClockDate(epochMs(2026, Calendar.NOVEMBER, 14, 18, 25, vilnius), vilnius)
+        assertEquals(ClockDateText(time = "18:25", date = "Šeštadienis, lapkričio 14 d."), nov14)
+        assertEquals("Šeštadienis", nov14.weekday)
+        assertEquals("lapkričio 14 d.", nov14.monthDay)
         assertEquals(
             ClockDateText(time = "07:03", date = "Pirmadienis, sausio 5 d."),
             formatClockDate(epochMs(2026, Calendar.JANUARY, 5, 7, 3, vilnius), vilnius)
@@ -105,7 +107,7 @@ class HeroClockTest {
     }
 
     @Test
-    fun `clock and date fit the 1080p hero without overlapping the logo or screen-off button`() {
+    fun `clock and date sit top-right in the 1080p hero without overlapping the screen-off button`() {
         val fixedNowMs = epochMs(2026, Calendar.NOVEMBER, 14, 18, 25)
         var currentStation by mutableStateOf(stations.first())
 
@@ -125,27 +127,21 @@ class HeroClockTest {
             composeTestRule.waitForIdle()
 
             composeTestRule.onNodeWithTag("hero-clock").assertTextEquals("18:25")
-            composeTestRule.onNodeWithTag("hero-date").assertTextEquals("Šeštadienis, lapkričio 14 d.")
+            composeTestRule.onNodeWithTag("hero-date").assertTextEquals("Šeštadienis\nlapkričio 14 d.")
 
             val clock = composeTestRule.onNodeWithTag("hero-clock-container").getUnclippedBoundsInRoot()
             val button = composeTestRule.onNodeWithTag("screen-off-button").getUnclippedBoundsInRoot()
-            val logo = composeTestRule.onNodeWithTag("hero-station-logo").getUnclippedBoundsInRoot()
 
+            assertTrue("${station.id}: clock top ${clock.top} must be inside hero", clock.top.value >= 0f)
             assertTrue("${station.id}: clock bottom ${clock.bottom} exceeds 254.dp", clock.bottom.value <= 254f)
             assertTrue("${station.id}: clock right ${clock.right} exceeds 864.dp", clock.right.value <= 864f)
-            assertEquals(
-                "${station.id}: clock must align vertically with screen-off button",
-                button.bottom.value,
-                clock.bottom.value,
-                1f
+            assertTrue(
+                "${station.id}: clock top ${clock.top} must sit above screen-off button top ${button.top}",
+                clock.top.value < button.top.value
             )
             assertTrue(
                 "${station.id}: clock left ${clock.left} too close to button right ${button.right}",
                 clock.left.value - button.right.value >= 48f
-            )
-            assertTrue(
-                "${station.id}: clock top ${clock.top} too close to logo bottom ${logo.bottom}",
-                clock.top.value - logo.bottom.value >= 12f
             )
         }
     }
@@ -173,16 +169,22 @@ class HeroClockTest {
         val style = layouts.single().layoutInput.style
         assertEquals("tnum", style.fontFeatureSettings)
         assertEquals(OutfitFamily, style.fontFamily)
+        assertEquals(52.sp, style.fontSize)
+
+        val dateLayouts = mutableListOf<TextLayoutResult>()
+        composeTestRule.onNodeWithTag("hero-date")
+            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(dateLayouts) }
+        val dateStyle = dateLayouts.single().layoutInput.style
+        assertEquals(OutfitFamily, dateStyle.fontFamily)
+        assertEquals(FontWeight.Normal, dateStyle.fontWeight)
     }
 
     @Test
-    fun `screen-off icon aligns with equalizer column and clock aligns on baseline with date`() {
+    fun `screen-off pill aligns with equalizer column and date stacks right-aligned under clock`() {
         val fixedNowMs = epochMs(2026, Calendar.NOVEMBER, 14, 18, 25)
         val station = stations.first()
-        lateinit var density: Density
 
         composeTestRule.setContent {
-            density = LocalDensity.current
             RadijasTheme(stationId = station.id) {
                 HeroPanel(
                     station = station,
@@ -193,44 +195,37 @@ class HeroClockTest {
             }
         }
 
-        val iconBounds = composeTestRule
-            .onNodeWithTag("screen-off-icon", useUnmergedTree = true)
+        val buttonBounds = composeTestRule
+            .onNodeWithTag("screen-off-button")
             .getUnclippedBoundsInRoot()
         val equalizerBounds = composeTestRule
             .onNodeWithTag("hero-equalizer")
             .getUnclippedBoundsInRoot()
         assertEquals(
-            "screen-off icon must optically align with the left hero column",
+            "screen-off pill must align with the left hero column",
             equalizerBounds.left.value,
-            iconBounds.left.value,
-            0.5f
+            buttonBounds.left.value,
+            1.0f
         )
 
-        val dateLayouts = mutableListOf<TextLayoutResult>()
-        composeTestRule.onNodeWithTag("hero-date")
-            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(dateLayouts) }
-        val clockLayouts = mutableListOf<TextLayoutResult>()
-        composeTestRule.onNodeWithTag("hero-clock")
-            .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(clockLayouts) }
-
-        val dateTopPx = with(density) {
-            composeTestRule.onNodeWithTag("hero-date").getUnclippedBoundsInRoot().top.toPx()
-        }
-        val clockTopPx = with(density) {
-            composeTestRule.onNodeWithTag("hero-clock").getUnclippedBoundsInRoot().top.toPx()
-        }
+        val dateBounds = composeTestRule.onNodeWithTag("hero-date").getUnclippedBoundsInRoot()
+        val clockBounds = composeTestRule.onNodeWithTag("hero-clock").getUnclippedBoundsInRoot()
+        assertTrue(
+            "date (${dateBounds.top}) must sit below clock (${clockBounds.bottom})",
+            dateBounds.top.value > clockBounds.bottom.value
+        )
         assertEquals(
-            "date and clock must share a baseline",
-            dateTopPx + dateLayouts.single().firstBaseline,
-            clockTopPx + clockLayouts.single().firstBaseline,
-            1.5f
+            "date and clock must right-align inside the hero column",
+            clockBounds.right.value,
+            dateBounds.right.value,
+            2.0f
         )
     }
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `hero clock and screen-off control fit without overlapping at fontScale 1_3`() {
-        // Long Lithuanian weekday + month name ("Ketvirtadienis, rugpjūčio 27 d.").
+        // Long Lithuanian weekday + month name ("Ketvirtadienis\nrugpjūčio 27 d.").
         val longDateMs = epochMs(2026, Calendar.AUGUST, 27, 18, 25)
         val station = stations.first()
 
@@ -251,11 +246,16 @@ class HeroClockTest {
         }
 
         val button = composeTestRule.onNodeWithTag("screen-off-button").getUnclippedBoundsInRoot()
+        val equalizer = composeTestRule.onNodeWithTag("hero-equalizer").getUnclippedBoundsInRoot()
         val clock = composeTestRule.onNodeWithTag("hero-clock-container").getUnclippedBoundsInRoot()
 
         assertTrue(
             "button right ${button.right} overlaps clock left ${clock.left} at fontScale 1.3",
             clock.left.value - button.right.value >= 24f
+        )
+        assertTrue(
+            "button top ${button.top} overlaps equalizer bottom ${equalizer.bottom} at fontScale 1.3",
+            button.top.value > equalizer.bottom.value
         )
         assertTrue("clock right ${clock.right} exceeds 864.dp at fontScale 1.3", clock.right.value <= 864f)
         assertTrue("clock bottom ${clock.bottom} exceeds 254.dp at fontScale 1.3", clock.bottom.value <= 254f)

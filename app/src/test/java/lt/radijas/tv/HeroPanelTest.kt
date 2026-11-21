@@ -100,8 +100,8 @@ class HeroPanelTest {
         val shelf = composeTestRule.onNodeWithTag("station-tile-lietus").getUnclippedBoundsInRoot()
         val above = (button.top - equalizer.bottom).value
         val below = (shelf.top - button.bottom).value
-        assertTrue("button needs generous space above it: $above", above >= 20f)
-        assertEquals("button should be vertically centered between the visualizer and shelf", above, below, 8f)
+        assertTrue("button needs generous space above it: $above", above >= 16f)
+        assertTrue("button needs generous breathing room above the shelf: $below", below >= 24f)
     }
 
     @Test
@@ -161,7 +161,7 @@ class HeroPanelTest {
     }
 
     @Test
-    fun `logo and screen-off button fit the real 1080p hero`() {
+    fun `clock, equalizer and screen-off button fit the real 1080p hero`() {
         composeTestRule.setContent {
             RadijasTheme(stationId = station.id) {
                 // The real hero at 1080p: 864 dp wide, 254 dp tall (540 - insets - shelf).
@@ -173,11 +173,12 @@ class HeroPanelTest {
             }
         }
 
-        val logo = composeTestRule.onNodeWithTag("hero-station-logo").getUnclippedBoundsInRoot()
+        composeTestRule.onNodeWithTag("hero-station-logo").assertDoesNotExist()
+        val clock = composeTestRule.onNodeWithTag("hero-clock-container").getUnclippedBoundsInRoot()
         val button = composeTestRule.onNodeWithTag("screen-off-button").getUnclippedBoundsInRoot()
 
-        assertEquals("the logo keeps the full slot width", 168f, (logo.right - logo.left).value, 0.5f)
-        assertTrue("the wide mark is shorter than the slot", (logo.bottom - logo.top).value < 168f)
+        assertTrue("clock must stay inside hero width", clock.right.value <= 864f)
+        assertTrue("clock must stay inside hero height", clock.bottom.value <= 254f)
         assertTrue("the control stays inside the hero", button.bottom.value <= 254f)
         assertTrue("the control has room for a visible label", button.right.value - button.left.value > 48f)
         composeTestRule.onNodeWithText("Patamsinti ekraną").assertExists()
@@ -185,6 +186,32 @@ class HeroPanelTest {
         val equalizer = composeTestRule.onNodeWithTag("hero-equalizer").getUnclippedBoundsInRoot()
         assertTrue("the equalizer is larger than the old indicator", (equalizer.right - equalizer.left).value > 18f)
         assertTrue("the focused button must not touch the equalizer", (button.top - equalizer.bottom).value >= 8f)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `overflowing track title stays flush-left aligned with the equalizer`() {
+        val longTitle = "Atlikėjas ir dar vienas atlikėjas - labai ilgas kūrinio pavadinimas, kuris netelpa į vieną eilutę televizoriaus ekrane"
+        composeTestRule.setContent {
+            RadijasTheme(stationId = station.id) {
+                HeroPanel(
+                    station = station,
+                    status = PlayerStatus.PLAYING,
+                    trackTitle = longTitle,
+                    modifier = Modifier.requiredSize(864.dp, 254.dp)
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("hero-track-fade").assertExists()
+        val titleLeft = composeTestRule.onNodeWithTag("hero-track-title").getUnclippedBoundsInRoot().left.value
+        val equalizerLeft = composeTestRule.onNodeWithTag("hero-equalizer").getUnclippedBoundsInRoot().left.value
+        assertEquals(
+            "overflowing track title must stay flush-left with the equalizer",
+            equalizerLeft,
+            titleLeft,
+            1.0f
+        )
     }
 
     @Test

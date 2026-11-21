@@ -3,7 +3,6 @@ package lt.radijas.tv
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import lt.radijas.tv.data.repository.RadioRepository
-import lt.radijas.tv.ui.theme.ControlTint
 import lt.radijas.tv.ui.theme.stationColors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,32 +36,36 @@ class StationPaletteTest {
             val c = stationColors.getValue(station.id)
             val pairs = listOf(
                 "onSurface on surface" to (c.onSurface to c.surface),
-                "track line 66% on surface" to (compose(c.onSurface, c.surface, 0.66f) to c.surface),
+                "track line 74% on surface" to (compose(c.onSurface, c.surface, 0.74f) to c.surface),
                 "status line 84% on surface" to (compose(c.onSurface, c.surface, 0.84f) to c.surface),
                 "onSurfaceVariant on surfaceVariant" to (c.onSurfaceVariant to c.surfaceVariant),
                 "onPrimaryContainer on primaryContainer" to (c.onPrimaryContainer to c.primaryContainer),
-                // The screen-off glyph sits on a pill that is the container tinted 8 % towards
-                // primary; the audit found this pair untested.
-                "screen-off glyph on its pill" to (
-                    c.primary to lerp(c.surfaceVariant, c.primary, ControlTint)
+                "screen-off focused pill text" to (c.onPrimary to c.primary),
+                "screen-off resting pill text" to (
+                    c.onSurface to compose(c.onSurface, c.surface, 0.08f)
                     ),
+                "screen-off resting pill icon" to (
+                    c.primary to compose(c.onSurface, c.surface, 0.08f)
+                    ),
+                "equalizer primary on surface" to (c.primary to c.surface),
 
-                // The hero glow tints the right edge of the text column; the old palette test
-                // pinned this and the role-based one would otherwise let it regress.
-                "track line over the hero glow" to (
-                    compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.66f) to
+                // The hero glow tints the text and top-right clock/date column.
+                "track line 74% over the hero glow" to (
+                    compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.74f) to
                         glowOver(c.primaryContainer, c.surface)
                     ),
                 "status line over the hero glow" to (
                     compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.84f) to
                         glowOver(c.primaryContainer, c.surface)
                     ),
-                "hero date 74% on surface" to (compose(c.onSurface, c.surface, 0.74f) to c.surface),
-                "hero date 74% over bottom-right glow" to (
-                    compose(c.onSurface, glowOver(c.primaryContainer, c.surface), 0.74f) to
-                        glowOver(c.primaryContainer, c.surface)
+                "hero date 74% over peak top-right glow" to (
+                    compose(c.onSurface, peakGlow(c.primaryContainer, c.surface), 0.74f) to
+                        peakGlow(c.primaryContainer, c.surface)
                     ),
-                "hero clock 84% on surface" to (compose(c.onSurface, c.surface, 0.84f) to c.surface),
+                "hero clock 90% over peak top-right glow" to (
+                    compose(c.onSurface, peakGlow(c.primaryContainer, c.surface), 0.90f) to
+                        peakGlow(c.primaryContainer, c.surface)
+                    ),
             )
             pairs.forEach { (name, pair) ->
                 val ratio = contrast(pair.first, pair.second)
@@ -86,15 +89,9 @@ class StationPaletteTest {
         }
     }
 
-    /** M3-style blend used by the screen-off control's focused pill. */
-    private fun lerp(from: Long, to: Long, fraction: Float): Long {
-        fun channel(shift: Int): Long {
-            val start = ((from shr shift) and 0xFF).toFloat()
-            val end = ((to shr shift) and 0xFF).toFloat()
-            return (start + (end - start) * fraction).toLong()
-        }
-        return (0xFFL shl 24) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
-    }
+    /** Peak glow tint under the top-right hero clock and date: 44 % of primaryContainer. */
+    private fun peakGlow(primaryContainer: Long, surface: Long): Long =
+        compose(primaryContainer, surface, 0.44f)
 
     /** Worst-case glow tint where it reaches the text column: 16 % of primaryContainer. */
     private fun glowOver(primaryContainer: Long, surface: Long): Long =

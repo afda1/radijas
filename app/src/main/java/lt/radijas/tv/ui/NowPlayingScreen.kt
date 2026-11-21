@@ -48,7 +48,7 @@ fun NowPlayingScreen(
                 .fillMaxWidth(),
             nowMs = nowMs
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(14.dp))
         StationShelf(
             stations = stations,
             playingId = uiState.station.id,

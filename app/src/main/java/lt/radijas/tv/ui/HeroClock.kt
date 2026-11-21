@@ -4,14 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -25,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +37,10 @@ import kotlinx.coroutines.delay
 data class ClockDateText(
     val time: String,
     val date: String
-)
+) {
+    val weekday: String get() = date.substringBefore(", ")
+    val monthDay: String get() = date.substringAfter(", ", "")
+}
 
 /**
  * Formats [epochMs] into 24-hour `HH:mm` time and a Lithuanian date string
@@ -134,8 +134,8 @@ internal fun rememberClockDate(nowMs: () -> Long): ClockDateText {
 }
 
 /**
- * Displays the current Lithuanian date and 24-hour clock in the hero's bottom-right footer band,
- * matching the screen-off control height and station palette contrast tokens.
+ * Displays the current 24-hour clock and two-line Lithuanian date in the hero's top-right corner,
+ * keeping station identity clean while pairing time and date naturally with what is playing.
  */
 @Composable
 internal fun HeroClock(
@@ -146,50 +146,39 @@ internal fun HeroClock(
     val colors = MaterialTheme.colorScheme
     val noFontPad = PlatformTextStyle(includeFontPadding = false)
 
-    Box(
-        modifier = modifier
-            .heightIn(min = 44.dp)
-            .testTag("hero-clock-container"),
-        contentAlignment = Alignment.CenterEnd
+    Column(
+        modifier = modifier.testTag("hero-clock-container"),
+        horizontalAlignment = Alignment.End
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = clockDate.date,
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .alignByBaseline()
-                    .testTag("hero-date"),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 20.sp,
-                    lineHeight = 26.sp,
-                    platformStyle = noFontPad
-                ),
-                color = colors.onSurface.copy(alpha = 0.74f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                softWrap = false
-            )
-            Spacer(Modifier.width(10.dp))
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .size(4.dp)
-                    .background(colors.primary.copy(alpha = 0.84f), CircleShape)
-            )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                text = clockDate.time,
-                modifier = Modifier
-                    .alignByBaseline()
-                    .testTag("hero-clock"),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontFeatureSettings = "tnum",
-                    platformStyle = noFontPad
-                ),
-                color = colors.onSurface.copy(alpha = 0.84f),
-                maxLines = 1,
-                softWrap = false
-            )
-        }
+        Text(
+            text = clockDate.time,
+            modifier = Modifier.testTag("hero-clock"),
+            style = MaterialTheme.typography.displayLarge.copy(
+                fontSize = 52.sp,
+                lineHeight = 56.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = (-1.5).sp,
+                fontFeatureSettings = "tnum",
+                platformStyle = noFontPad
+            ),
+            color = colors.onSurface.copy(alpha = 0.90f),
+            maxLines = 1,
+            softWrap = false
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "${clockDate.weekday}\n${clockDate.monthDay}",
+            modifier = Modifier.testTag("hero-date"),
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontSize = 18.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.Normal,
+                platformStyle = noFontPad
+            ),
+            color = colors.onSurface.copy(alpha = 0.74f),
+            textAlign = TextAlign.End,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

@@ -57,9 +57,6 @@ internal val RadijasTypography = Typography(
     labelLarge = TextStyle(fontFamily = OutfitFamily, fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.1.sp),
 )
 
-/** How much of the station's primary the screen-off control carries when it is focused. */
-internal const val ControlTint = 0.08f
-
 /**
  * The blackout frame. Deliberately absolute black: the point of the control is the least light
  * the panel can emit, so this is one surface that is not tinted towards the station hue.

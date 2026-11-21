@@ -28,7 +28,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -61,8 +60,8 @@ import lt.radijas.tv.ui.theme.stationScheme
  *
  * It is also an accessibility button: the screen has no other control, so a tile that assistive
  * technology cannot press would make the app unusable for a low-vision user. The playing tile
- * says „Groja" (state) and carries a small brand bar, so the listening station is identifiable
- * even after focus has moved away from it.
+ * says „Groja" (state), uses a medium label weight and carries a small accent dot, while the
+ * outer ring belongs exclusively to the focused item.
  */
 @Composable
 fun StationTile(
@@ -125,20 +124,14 @@ fun StationTile(
                 val scale = if (isFocused) 1.06f else 1f
                 scaleX = scale
                 scaleY = scale
+                alpha = if (isFocused) 1f else 0.88f
             }
             .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
             .border(
-                width = if (isFocused) 3.dp else 2.dp,
-                // The ring is the brand itself, lightened until it is readable on the focused
-                // surface: a white ring would be the plainest thing on a screen about colour.
-                // When playing and unfocused, keep a quiet 2 dp tint so browsing the shelf
-                // never hides which station is currently on air.
-                color = when {
-                    isFocused -> accent
-                    isPlaying -> accent.copy(alpha = 0.65f)
-                    else -> Color.Transparent
-                },
+                width = 3.dp,
+                // Outer ring belongs strictly to the focused tile (one-focus rule).
+                color = if (isFocused) accent else Color.Transparent,
                 shape = MaterialTheme.shapes.extraLarge
             )
             .padding(10.dp),
