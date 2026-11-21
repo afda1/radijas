@@ -78,7 +78,7 @@ fun ScreenOffOverlay(
 ) {
     val clockDate = rememberClockDate(nowMs)
     val onSurface = MaterialTheme.colorScheme.onSurface
-    val subtitleBoxHeight = with(LocalDensity.current) { 84.sp.toDp() }
+    val subtitleBoxHeight = with(LocalDensity.current) { 64.sp.toDp() }
     val (shiftX, shiftY) = remember(clockDate, nowMs) { screenOffPixelShiftDp(nowMs()) }
     val subtitle = trackTitle?.takeIf { it.isNotBlank() } ?: stationName?.takeIf { it.isNotBlank() }
     val subtitleAlpha = remember { Animatable(1f) }
@@ -105,76 +105,82 @@ fun ScreenOffOverlay(
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = shiftX.dp, y = shiftY.dp),
+                .offset(x = shiftX.dp, y = shiftY.dp)
+                .padding(bottom = 46.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = clockDate.time,
                 modifier = Modifier.testTag("screen-off-clock"),
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = 80.sp,
-                    lineHeight = 86.sp,
+                    fontSize = 116.sp,
+                    lineHeight = 120.sp,
                     fontWeight = FontWeight.Normal,
-                    letterSpacing = (-1.5).sp,
+                    letterSpacing = (-3.0).sp,
                     fontFeatureSettings = "tnum",
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
-                color = onSurface.copy(alpha = 0.38f),
+                color = onSurface.copy(alpha = 0.36f),
                 maxLines = 1
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = clockDate.date,
                 modifier = Modifier.testTag("screen-off-date"),
                 style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 22.sp,
-                    lineHeight = 28.sp,
+                    fontSize = 24.sp,
+                    lineHeight = 30.sp,
                     fontWeight = FontWeight.Normal,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
-                color = onSurface.copy(alpha = 0.30f),
+                color = onSurface.copy(alpha = 0.28f),
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(24.dp))
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 720.dp)
-                    .fillMaxWidth()
-                    .height(subtitleBoxHeight),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                if (subtitle != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .graphicsLayer { alpha = subtitleAlpha.value }
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.34f),
-                                    CircleShape
-                                )
-                                .testTag("screen-off-playing-dot")
-                        )
-                        Text(
-                            text = subtitle,
-                            modifier = Modifier
-                                .weight(1f, fill = false)
-                                .graphicsLayer { alpha = subtitleAlpha.value }
-                                .testTag("screen-off-track"),
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            ),
-                            color = onSurface.copy(alpha = 0.28f),
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(x = shiftX.dp, y = shiftY.dp)
+                .padding(bottom = 52.dp)
+                .widthIn(max = 720.dp)
+                .fillMaxWidth()
+                .height(subtitleBoxHeight),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            if (subtitle != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .graphicsLayer { alpha = subtitleAlpha.value }
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.34f),
+                                CircleShape
+                            )
+                            .testTag("screen-off-playing-dot")
+                    )
+                    Text(
+                        text = subtitle,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .graphicsLayer { alpha = subtitleAlpha.value }
+                            .testTag("screen-off-track"),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontSize = 24.sp,
+                            lineHeight = 30.sp,
+                            fontWeight = FontWeight.Normal,
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        ),
+                        color = onSurface.copy(alpha = 0.28f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -185,7 +191,7 @@ fun ScreenOffOverlay(
                 color = onSurface.copy(alpha = 0.45f),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 21.dp)
+                    .padding(bottom = 4.dp)
             )
         }
     }

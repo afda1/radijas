@@ -95,7 +95,7 @@ class ScreenOffOverlayTest {
             .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(clockLayouts) }
         val clockStyle = clockLayouts.single().layoutInput.style
         assertEquals("tnum", clockStyle.fontFeatureSettings)
-        assertEquals(80.sp, clockStyle.fontSize)
+        assertEquals(116.sp, clockStyle.fontSize)
         assertEquals(FontWeight.Normal, clockStyle.fontWeight)
         assertTrue(
             "clock color must stay faint (${clockStyle.color})",
@@ -288,8 +288,8 @@ class ScreenOffOverlayTest {
             clockBounds.bottom.value < dateBounds.top.value
         )
         assertTrue(
-            "track (${trackBounds.top}) must sit below date (${dateBounds.bottom})",
-            dateBounds.bottom.value < trackBounds.top.value
+            "track (${trackBounds.top}) must sit well below Nest Hub date (${dateBounds.bottom})",
+            trackBounds.top.value - dateBounds.bottom.value >= 60f
         )
         assertTrue("date left (${dateBounds.left}) out of bounds", dateBounds.left.value >= 0f)
         assertTrue("date right (${dateBounds.right}) exceeds 960.dp", dateBounds.right.value <= 960f)

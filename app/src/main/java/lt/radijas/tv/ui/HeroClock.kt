@@ -154,14 +154,14 @@ internal fun HeroClock(
             text = clockDate.time,
             modifier = Modifier.testTag("hero-clock"),
             style = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 52.sp,
-                lineHeight = 56.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = (-1.5).sp,
+                fontSize = 60.sp,
+                lineHeight = 64.sp,
+                fontWeight = FontWeight.Normal,
+                letterSpacing = (-2.0).sp,
                 fontFeatureSettings = "tnum",
                 platformStyle = noFontPad
             ),
-            color = colors.onSurface.copy(alpha = 0.90f),
+            color = colors.onSurface.copy(alpha = 0.92f),
             maxLines = 1,
             softWrap = false
         )

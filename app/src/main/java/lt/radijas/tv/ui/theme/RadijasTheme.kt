@@ -49,8 +49,8 @@ internal val RadijasTypography = Typography(
         fontFamily = OutfitFamily,
         fontSize = 64.sp,
         lineHeight = 70.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-1.0).sp
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-1.2).sp
     ),
     headlineSmall = TextStyle(fontFamily = OutfitFamily, fontSize = 32.sp, lineHeight = 38.sp),
     titleMedium = TextStyle(fontFamily = OutfitFamily, fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),

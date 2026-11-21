@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -73,19 +74,26 @@ fun StationTile(
     onFocused: () -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    // Each tile paints from its OWN station palette, not from the playing station's theme: the
-    // carousel is where stations are told apart, so every tile carries its own container colour
-    // before anything is selected. Focus is the ring and the 6 % scale; the fill does not change.
+    // Resting Nest stone cards stay quiet with a subtle 22% tint of their own palette; an
+    // unfocused playing card blooms gently at 65%, while only the focused tile lights up to
+    // full primaryContainer with a bright 3 dp ring.
     val colors = remember(station.id) { stationScheme(station.id) }
-    val background = colors.primaryContainer
+    val restingBackground = remember(colors) { lerp(colors.surface, colors.primaryContainer, 0.22f) }
+    val playingBackground = remember(colors) { lerp(colors.surface, colors.primaryContainer, 0.65f) }
+    val background = when {
+        isFocused -> colors.primaryContainer
+        isPlaying -> playingBackground
+        else -> restingBackground
+    }
     val accent = colors.border
-    val labelColor = colors.onPrimaryContainer
+    val labelColor = if (isFocused || isPlaying) colors.onPrimaryContainer else colors.onSurface.copy(alpha = 0.80f)
+    val logoTint = if (isFocused || isPlaying) Color.White else Color.White.copy(alpha = 0.88f)
     val playingLabel = stringResource(R.string.station_playing)
     val selectLabel = stringResource(R.string.station_select)
 
     Column(
         modifier = modifier
-            .width(200.dp)
+            .width(208.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
@@ -117,24 +125,26 @@ fun StationTile(
                 }
             }
             .testTag("station-tile-${station.id}")
-            // The focused tile grows 6 % from its centre, exactly as the design asks. No
-            // animation: focus is still the only thing on screen that moves, and it moves
-            // immediately, never as a delayed flourish.
+            // The focused tile grows 6 % from its centre immediately, keeping D-pad response crisp.
             .graphicsLayer {
                 val scale = if (isFocused) 1.06f else 1f
                 scaleX = scale
                 scaleY = scale
-                alpha = if (isFocused) 1f else 0.88f
             }
             .clip(MaterialTheme.shapes.extraLarge)
             .background(background)
             .border(
-                width = 3.dp,
-                // Outer ring belongs strictly to the focused tile (one-focus rule).
-                color = if (isFocused) accent else Color.Transparent,
+                width = if (isFocused) 3.dp else 1.dp,
+                // Outer 3 dp focus ring belongs strictly to the focused item; resting tiles keep a
+                // quiet hairline border matching the smoked Nest card above.
+                color = when {
+                    isFocused -> accent
+                    isPlaying -> colors.onSurface.copy(alpha = 0.14f)
+                    else -> colors.onSurface.copy(alpha = 0.09f)
+                },
                 shape = MaterialTheme.shapes.extraLarge
             )
-            .padding(10.dp),
+            .padding(horizontal = 12.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Drawn at its optically normalised width, not fitted to the box: stationLogoWidthFraction
@@ -144,7 +154,7 @@ fun StationTile(
         val logoWidth = 156.dp * (stationLogoWidthFraction[station.id] ?: 1f)
         Box(
             modifier = Modifier
-                .size(156.dp)
+                .size(width = 164.dp, height = 106.dp)
                 .clip(RoundedCornerShape(18.dp)),
             contentAlignment = Alignment.Center
         ) {
@@ -152,7 +162,7 @@ fun StationTile(
                 painter = painter,
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(Color.White),
+                colorFilter = ColorFilter.tint(logoTint),
                 modifier = Modifier.size(width = logoWidth, height = logoWidth / aspect)
             )
         }

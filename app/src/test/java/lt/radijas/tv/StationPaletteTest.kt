@@ -40,6 +40,13 @@ class StationPaletteTest {
                 "status line 84% on surface" to (compose(c.onSurface, c.surface, 0.84f) to c.surface),
                 "onSurfaceVariant on surfaceVariant" to (c.onSurfaceVariant to c.surfaceVariant),
                 "onPrimaryContainer on primaryContainer" to (c.onPrimaryContainer to c.primaryContainer),
+                "resting Nest tile label" to (
+                    compose(c.onSurface, compose(c.primaryContainer, c.surface, 0.22f), 0.80f) to
+                        compose(c.primaryContainer, c.surface, 0.22f)
+                    ),
+                "unfocused playing tile label" to (
+                    c.onPrimaryContainer to compose(c.primaryContainer, c.surface, 0.65f)
+                    ),
                 "screen-off focused pill text" to (c.onPrimary to c.primary),
                 "screen-off resting pill text" to (
                     c.onSurface to compose(c.onSurface, c.surface, 0.08f)
@@ -78,9 +85,10 @@ class StationPaletteTest {
     fun `focus ring stands out on every surface it is drawn on`() {
         stations.forEach { station ->
             val c = stationColors.getValue(station.id)
-            // 6:1 against the page and against the tile container the ring surrounds.
+            // 6:1 against the page and against every tile container the ring surrounds.
             listOf(
                 "tile container" to (c.primaryContainer to 6.0),
+                "resting Nest tile container" to (compose(c.primaryContainer, c.surface, 0.22f) to 6.0),
                 "page" to (c.surface to 6.0),
             ).forEach { (name, pair) ->
                 val ratio = contrast(c.border, pair.first)

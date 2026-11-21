@@ -1,6 +1,6 @@
 # Būsena
 
-Atnaujinta: 2026-11-15 (paskutinė testų ir lint patikra — 125 testai, 0 klaidų, 0 lint klaidų)
+Atnaujinta: 2026-11-21 (paskutinė testų ir lint patikra — 129 testai, 0 klaidų, 0 lint klaidų)
 
 Šis failas skirtas tam, kas tęsia darbus po pertraukos arba kitoje mašinoje. README pasakoja, kas tai per programa. Čia surašyta, kas padaryta, kas liko ir kokie sprendimai dar nepriimti.
 
@@ -31,7 +31,11 @@ Atnaujinta: 2026-11-15 (paskutinė testų ir lint patikra — 125 testai, 0 klai
 - **Laikrodis, data ir užtemdyto ekrano indikatorius (2026-11-15):** pagrindiniame hero ekrane (`ui/HeroClock.kt`, `ui/HeroPanel.kt`) rodoma 24 val. laikas (`tnum`) ir lietuviška data apatinėje eilutėje šalia „Patamsinti ekraną" (patikrinta ir su `fontScale = 1.3f`); mygtuko ikona optiškai sulygiuota su kairiuoju hero stulpeliu; kūrinių kaitai pridėtas `200 ms` skaidrumo perėjimas.
 - **Patamsinto ekrano naktinis vaizdas ir OLED apsauga (2026-11-15):** `ui/ScreenOffOverlay.kt` juodame fone blankiai rodo laiką ir grojamą kūrinį (iki 2 eilučių; be meta — stoties pavadinimą), o visas turinys kas minutę švelniai pasislenka (`screenOffPixelShiftDp`, ±6 dp × ±4 dp).
 - **Android TV elgsena, prieinamumas ir plytelių žymėjimas (2026-11-15):** pridėtas `BackHandler(enabled = screenOff)` (`MainActivity.kt`), `VOLUME_UP`/`VOLUME_DOWN`/`VOLUME_MUTE` praleidžiami neatjungiant tamsaus ekrano (`ScreenOffPolicy.kt`), foninis UI paslepiamas nuo fokuso ir TalkBack kol ekranas užtemdytas, būsenos tekstams įjungtas `LiveRegionMode.Polite`, o grojanti nefokusuota `StationTile` rodo 2 dp rėmelį ir taškelį šalia pavadinimo.
-- Testų būsena (2026-11-15): **24 testų rinkiniai, 125 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), Android Lint **0 klaidų / 31 esamas įspėjimas**. Dabartinės 1920×1080 ekrano nuotraukos atnaujintos `docs/screenshots/current/`. (Ankstesnis 2026-10-30 etapas turėjo 99 testus; žr. `docs/2026-10-30-radio-update.md`.)
+- **Google TV ir „Nest Hub“ estetika + data užtemdytame ekrane (2026-11-21):**
+  - Hero bloke atsisakyta dubliuoto logotipo — viršutiniame dešiniajame kampe įtaisytas `60 sp` (`FontWeight.Normal`, `tnum`) laikrodis su dviejų eilučių dešinėje išlygiuota data (`ui/HeroClock.kt`, `ui/HeroPanel.kt`); „Patamsinti ekraną“ tapo `CircleShape` *pill* kapsule, sutvarkyta ilgos dainos *marquee* kairioji ašis, o ekvalaizeris suplonintas (`6 dp × 22 dp`, `primary`).
+  - Pilnas „Google Nest“ perdarymas (`docs/superpowers/specs/2026-11-21-google-tv-polish-design.md`, `docs/superpowers/specs/2026-11-21-google-nest-aesthetic-design.md`): atmosferinis fono švytėjimas už dūminio Hero (`NowPlayingScreen.kt`, `450 ms` spalvų persiliejimas), ramios `208×168 dp` tamsaus tono plytelės su griežta vieno fokuso rėmelio taisykle (`StationTile.kt`), lengvesnis `SemiBold` stoties pavadinimas (`RadijasTheme.kt`) ir „Nest Hub“ tipo tamsusis režimas (`116 sp` laikrodis, data centre ir `24 sp` kūrinio eilutė su taškeliu apačioje, `ui/ScreenOffOverlay.kt`).
+  - Debug build'as įdiegtas ir paleistas realiame „Telia DV8919X-LT“ priedėlyje (`adb connect 192.168.31.21:5555`).
+- Testų būsena (2026-11-21): **24 testų rinkiniai, 129 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), Android Lint **0 klaidų / 33 įspėjimai**. Dabartinės 1920×1080 ekrano nuotraukos atnaujintos `docs/screenshots/current/`. (Ankstesnis 2026-10-30 etapas turėjo 99 testus; žr. `docs/2026-10-30-radio-update.md`.)
 - README, ekrano nuotraukos, logotipas, TV baneris, AI autorystės disclosure.
 - Išvalyta prieš išleidimą: pašalintas ekvalaizerio kodas, nenaudojami piešiniai, `Coil`, `material3`, `viewmodel-compose`, `roborazzi`, instrumentation testų priklausomybės ir visi `Fogwave` pavadinimai kode (`RadijasPlaybackService`, `Theme.Radijas`, `radijas_prefs`).
 

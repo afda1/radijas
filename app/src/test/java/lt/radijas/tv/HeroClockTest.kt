@@ -169,7 +169,8 @@ class HeroClockTest {
         val style = layouts.single().layoutInput.style
         assertEquals("tnum", style.fontFeatureSettings)
         assertEquals(OutfitFamily, style.fontFamily)
-        assertEquals(52.sp, style.fontSize)
+        assertEquals(60.sp, style.fontSize)
+        assertEquals(FontWeight.Normal, style.fontWeight)
 
         val dateLayouts = mutableListOf<TextLayoutResult>()
         composeTestRule.onNodeWithTag("hero-date")

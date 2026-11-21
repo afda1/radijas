@@ -2,6 +2,7 @@ package lt.radijas.tv.ui
 
 import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -99,27 +100,39 @@ fun HeroPanel(
     nowMs: () -> Long = System::currentTimeMillis
 ) {
     val colors = MaterialTheme.colorScheme
-    // Remembered, not rebuilt: the hero recomposes on every status and track tick, and a new
-    // Brush each time would throw away the shader. drawWithCache then builds the brush once per
-    // size, and only when the station changes.
-    val heroBackground = remember(colors.primaryContainer, colors.surface) {
-        heroGlowBackground(colors.primaryContainer, colors.surface)
+    val animatedSurface by animateColorAsState(
+        targetValue = colors.surface,
+        animationSpec = tween(durationMillis = 450),
+        label = "hero-surface"
+    )
+    val animatedTint by animateColorAsState(
+        targetValue = colors.primaryContainer,
+        animationSpec = tween(durationMillis = 450),
+        label = "hero-tint"
+    )
+    val animatedPrimary by animateColorAsState(
+        targetValue = colors.primary,
+        animationSpec = tween(durationMillis = 450),
+        label = "hero-primary"
+    )
+    // Remembered, not rebuilt: steady-state ticks skip rebuilding the gradient modifier while
+    // station changes smoothly crossfade over 450 ms.
+    val heroBackground = remember(animatedTint, animatedSurface) {
+        heroGlowBackground(animatedTint, animatedSurface.copy(alpha = 0.74f))
     }
 
     Box(
         modifier = modifier
             .testTag("hero-panel")
             .clip(MaterialTheme.shapes.extraLarge)
-            // The hero is a tinted version of the station surface, never a flat brand slab: a
-            // subtle tonal border separates it cleanly from the dark page while a wide radial
-            // glow washes gently across the upper-right clock corner.
+            // Smoked translucent surface letting the full-screen atmospheric glow breathe through.
             .then(heroBackground)
             .border(
                 width = 1.dp,
-                color = colors.onSurface.copy(alpha = 0.08f),
+                color = colors.onSurface.copy(alpha = 0.09f),
                 shape = MaterialTheme.shapes.extraLarge
             )
-            .padding(horizontal = 44.dp, vertical = 16.dp)
+            .padding(horizontal = 44.dp, vertical = 18.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -134,7 +147,7 @@ fun HeroPanel(
                     Spacer(Modifier.height(2.dp))
                     TrackTitleLine(trackTitle)
                     Spacer(Modifier.height(8.dp))
-                    StatusLine(status)
+                    StatusLine(status, equalizerColor = animatedPrimary)
                 }
                 Spacer(Modifier.width(24.dp))
                 HeroClock(nowMs = nowMs)
@@ -153,14 +166,14 @@ fun HeroPanel(
  * i.e. once per size and brand, not per recomposition.
  */
 /** Where the glow's core sits, as fractions of the hero box: top-right ambient wash. */
-private const val HeroCoreX = 0.88f
-private const val HeroCoreY = 0.28f
-private const val HeroGlowRadiusX = 0.42f
-private const val HeroGlowRadiusY = 0.85f
+private const val HeroCoreX = 0.86f
+private const val HeroCoreY = 0.24f
+private const val HeroGlowRadiusX = 0.48f
+private const val HeroGlowRadiusY = 0.90f
 
 /**
  * Paints the station glow behind the hero: the station's primary container at three alphas over
- * the hero surface, so every colour on screen still comes from the one generated palette.
+ * the translucent hero surface, so every colour on screen still comes from the one generated palette.
  */
 private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier.drawWithCache {
     val width = size.width
@@ -170,9 +183,9 @@ private fun heroGlowBackground(tint: Color, surface: Color): Modifier = Modifier
     val radiusY = HeroGlowRadiusY * height
     val glow = Brush.radialGradient(
         colors = listOf(
-            tint.copy(alpha = 0.44f),
-            tint.copy(alpha = 0.18f),
-            tint.copy(alpha = 0.0f)
+            tint.copy(alpha = 0.38f),
+            tint.copy(alpha = 0.15f),
+            Color.Transparent
         ),
         center = center,
         radius = radiusX
@@ -396,7 +409,10 @@ private fun TrackTitleLine(trackTitle: String?) {
 }
 
 @Composable
-private fun StatusLine(status: PlayerStatus) {
+private fun StatusLine(
+    status: PlayerStatus,
+    equalizerColor: Color = MaterialTheme.colorScheme.primary
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -413,14 +429,14 @@ private fun StatusLine(status: PlayerStatus) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            if (status == PlayerStatus.PLAYING) EqualizerBars(active = true)
+            if (status == PlayerStatus.PLAYING) EqualizerBars(active = true, barColor = equalizerColor)
         }
     }
 }
 
 /** Three recent PCM levels; the canvas has fixed bounds so the status copy never moves. */
 @Composable
-private fun EqualizerBars(active: Boolean) {
+private fun EqualizerBars(active: Boolean, barColor: Color = MaterialTheme.colorScheme.primary) {
     val sample by AudioLevelState.levels.collectAsStateWithLifecycle()
     var fresh by remember { mutableStateOf(false) }
     LaunchedEffect(sample, active) {
@@ -432,8 +448,6 @@ private fun EqualizerBars(active: Boolean) {
     val first by animateFloatAsState(targets[0], tween(100), label = "level-1")
     val second by animateFloatAsState(targets[1], tween(100), label = "level-2")
     val third by animateFloatAsState(targets[2], tween(100), label = "level-3")
-    // Read outside the draw lambda: a Canvas draw scope is not a composable context.
-    val barColor = MaterialTheme.colorScheme.primary
     Canvas(Modifier.size(28.dp, 22.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
         listOf(first, second, third).forEachIndexed { index, level ->
             val barHeight = 4.dp.toPx() + (size.height - 4.dp.toPx()) * level
