@@ -184,7 +184,10 @@ class HeroPanelTest {
         composeTestRule.onNodeWithText("Patamsinti ekraną").assertExists()
         composeTestRule.onNodeWithTag("hero-status").assertDoesNotExist()
         val equalizer = composeTestRule.onNodeWithTag("hero-equalizer").getUnclippedBoundsInRoot()
-        assertTrue("the equalizer is larger than the old indicator", (equalizer.right - equalizer.left).value > 18f)
+        assertTrue(
+            "the fluid wave equalizer must span the wide hero slot: ${(equalizer.right - equalizer.left).value}",
+            (equalizer.right - equalizer.left).value >= 160f
+        )
         assertTrue("the focused button must not touch the equalizer", (button.top - equalizer.bottom).value >= 8f)
     }
 

@@ -279,6 +279,9 @@ class ScreenOffOverlayTest {
 
         val clockBounds = composeTestRule.onNodeWithTag("screen-off-clock").getUnclippedBoundsInRoot()
         val dateBounds = dateNode.getUnclippedBoundsInRoot()
+        val waveBounds = composeTestRule.onNodeWithTag("screen-off-wave")
+            .assertIsDisplayed()
+            .getUnclippedBoundsInRoot()
         val trackBounds = composeTestRule.onNodeWithTag("screen-off-track").getUnclippedBoundsInRoot()
         val hintBounds = composeTestRule.onNodeWithText("Ekranas patamsintas. Paspausk bet kurį mygtuką.")
             .getUnclippedBoundsInRoot()
@@ -286,6 +289,14 @@ class ScreenOffOverlayTest {
         assertTrue(
             "date (${dateBounds.top}) must sit below clock (${clockBounds.bottom})",
             clockBounds.bottom.value < dateBounds.top.value
+        )
+        assertTrue(
+            "whisper wave (${waveBounds.top}) must sit well below Nest Hub date (${dateBounds.bottom})",
+            dateBounds.bottom.value < waveBounds.top.value
+        )
+        assertTrue(
+            "track (${trackBounds.top}) must sit below whisper wave (${waveBounds.bottom})",
+            waveBounds.bottom.value < trackBounds.top.value
         )
         assertTrue(
             "track (${trackBounds.top}) must sit well below Nest Hub date (${dateBounds.bottom})",
@@ -350,6 +361,14 @@ class ScreenOffOverlayTest {
             0.01f
         )
 
+        val waveBounds = composeTestRule.onNodeWithTag("screen-off-wave")
+            .assertIsDisplayed()
+            .getUnclippedBoundsInRoot()
+        val currentDateBounds = composeTestRule.onNodeWithTag("screen-off-date").getUnclippedBoundsInRoot()
+        assertTrue(
+            "whisper wave (${waveBounds.top}) must clear date (${currentDateBounds.bottom}) at fontScale 1.3",
+            waveBounds.top.value > currentDateBounds.bottom.value
+        )
         val trackBounds = composeTestRule.onNodeWithTag("screen-off-track").getUnclippedBoundsInRoot()
         val hintBounds = composeTestRule.onNodeWithText("Ekranas patamsintas. Paspausk bet kurį mygtuką.")
             .getUnclippedBoundsInRoot()

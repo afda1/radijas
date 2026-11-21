@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -78,7 +77,6 @@ fun ScreenOffOverlay(
 ) {
     val clockDate = rememberClockDate(nowMs)
     val onSurface = MaterialTheme.colorScheme.onSurface
-    val subtitleBoxHeight = with(LocalDensity.current) { 64.sp.toDp() }
     val (shiftX, shiftY) = remember(clockDate, nowMs) { screenOffPixelShiftDp(nowMs()) }
     val subtitle = trackTitle?.takeIf { it.isNotBlank() } ?: stationName?.takeIf { it.isNotBlank() }
     val subtitleAlpha = remember { Animatable(1f) }
@@ -106,7 +104,7 @@ fun ScreenOffOverlay(
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(x = shiftX.dp, y = shiftY.dp)
-                .padding(bottom = 46.dp),
+                .padding(bottom = 54.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -139,17 +137,18 @@ fun ScreenOffOverlay(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Box(
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .offset(x = shiftX.dp, y = shiftY.dp)
                 .padding(bottom = 52.dp)
                 .widthIn(max = 720.dp)
-                .fillMaxWidth()
-                .height(subtitleBoxHeight),
-            contentAlignment = Alignment.BottomCenter
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            AmbientAudioWave(color = MaterialTheme.colorScheme.primary)
             if (subtitle != null) {
+                Spacer(Modifier.height(10.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)

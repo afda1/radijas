@@ -1,12 +1,9 @@
 package lt.radijas.tv.ui
 
-import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MarqueeSpacing
@@ -37,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -53,7 +49,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -76,11 +71,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
 import lt.radijas.tv.R
 import lt.radijas.tv.data.model.RadioStation
-import lt.radijas.tv.player.AudioLevelState
 
 /**
  * Now-playing information and the screen-darkening control.
@@ -429,33 +421,7 @@ private fun StatusLine(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            if (status == PlayerStatus.PLAYING) EqualizerBars(active = true, barColor = equalizerColor)
-        }
-    }
-}
-
-/** Three recent PCM levels; the canvas has fixed bounds so the status copy never moves. */
-@Composable
-private fun EqualizerBars(active: Boolean, barColor: Color = MaterialTheme.colorScheme.primary) {
-    val sample by AudioLevelState.levels.collectAsStateWithLifecycle()
-    var fresh by remember { mutableStateOf(false) }
-    LaunchedEffect(sample, active) {
-        fresh = active && SystemClock.elapsedRealtime() - sample.updatedAt < 300
-        delay(300)
-        fresh = false
-    }
-    val targets = sample.values.map { if (fresh && active) kotlin.math.sqrt(it.coerceIn(0f, 1f)) else 0f }
-    val first by animateFloatAsState(targets[0], tween(100), label = "level-1")
-    val second by animateFloatAsState(targets[1], tween(100), label = "level-2")
-    val third by animateFloatAsState(targets[2], tween(100), label = "level-3")
-    Canvas(Modifier.size(28.dp, 22.dp).alpha(if (active) 1f else 0f).testTag("hero-equalizer")) {
-        listOf(first, second, third).forEachIndexed { index, level ->
-            val barHeight = 4.dp.toPx() + (size.height - 4.dp.toPx()) * level
-            drawRoundRect(
-                color = barColor,
-                topLeft = Offset(index * 11.dp.toPx(), size.height - barHeight),
-                size = Size(6.dp.toPx(), barHeight), cornerRadius = CornerRadius(3.dp.toPx())
-            )
+            if (status == PlayerStatus.PLAYING) HeroAudioWave(active = true, color = equalizerColor)
         }
     }
 }

@@ -1,6 +1,6 @@
 # Būsena
 
-Atnaujinta: 2026-11-21 (paskutinė testų ir lint patikra — 129 testai, 0 klaidų, 0 lint klaidų)
+Atnaujinta: 2026-11-21 (paskutinė testų ir lint patikra — 132 testai, 0 klaidų, 0 lint klaidų)
 
 Šis failas skirtas tam, kas tęsia darbus po pertraukos arba kitoje mašinoje. README pasakoja, kas tai per programa. Čia surašyta, kas padaryta, kas liko ir kokie sprendimai dar nepriimti.
 
@@ -34,8 +34,11 @@ Atnaujinta: 2026-11-21 (paskutinė testų ir lint patikra — 129 testai, 0 klai
 - **Google TV ir „Nest Hub“ estetika + data užtemdytame ekrane (2026-11-21):**
   - Hero bloke atsisakyta dubliuoto logotipo — viršutiniame dešiniajame kampe įtaisytas `60 sp` (`FontWeight.Normal`, `tnum`) laikrodis su dviejų eilučių dešinėje išlygiuota data (`ui/HeroClock.kt`, `ui/HeroPanel.kt`); „Patamsinti ekraną“ tapo `CircleShape` *pill* kapsule, sutvarkyta ilgos dainos *marquee* kairioji ašis, o ekvalaizeris suplonintas (`6 dp × 22 dp`, `primary`).
   - Pilnas „Google Nest“ perdarymas (`docs/superpowers/specs/2026-11-21-google-tv-polish-design.md`, `docs/superpowers/specs/2026-11-21-google-nest-aesthetic-design.md`): atmosferinis fono švytėjimas už dūminio Hero (`NowPlayingScreen.kt`, `450 ms` spalvų persiliejimas), ramios `208×168 dp` tamsaus tono plytelės su griežta vieno fokuso rėmelio taisykle (`StationTile.kt`), lengvesnis `SemiBold` stoties pavadinimas (`RadijasTheme.kt`) ir „Nest Hub“ tipo tamsusis režimas (`116 sp` laikrodis, data centre ir `24 sp` kūrinio eilutė su taškeliu apačioje, `ui/ScreenOffOverlay.kt`).
-  - Debug build'as įdiegtas ir paleistas realiame „Telia DV8919X-LT“ priedėlyje (`adb connect 192.168.31.21:5555`).
-- Testų būsena (2026-11-21): **24 testų rinkiniai, 129 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), Android Lint **0 klaidų / 33 įspėjimai**. Dabartinės 1920×1080 ekrano nuotraukos atnaujintos `docs/screenshots/current/`. (Ankstesnis 2026-10-30 etapas turėjo 99 testus; žr. `docs/2026-10-30-radio-update.md`.)
+  - Debug build'as įdiegtas ir patikrintas gyvai realiame „Telia DV8919X-LT“ priedėlyje (`adb connect 192.168.31.21:5555`).
+- **256 taškų PCM FFT dažnių analizė ir skystoji garso banga (2026-11-21):**
+  - `player/PcmSpectrumAnalyzer.kt` ir `player/AudioLevelState.kt` iš ExoPlayer 16-bit PCM srauto skaičiuoja boso, vidutinių ir aukštų dažnių energiją (`Cooley-Tukey Radix-2 FFT` su Hanno langu).
+  - `ui/AudioWaveVisualizer.kt` (`HeroAudioWave` ir `AmbientAudioWave`) pakeitė 3 barus į 3 sluoksnių skystą bangą Hero ekrane (`ui/HeroPanel.kt`) ir subtilią naktinę giją užtemdytame ekrane virš dainos (`ui/ScreenOffOverlay.kt`). Patikrinta gyvai „Telia DV8919X-LT“ priedėlyje.
+- Testų būsena (2026-11-21): **25 testų rinkiniai, 132 testai, 0 klaidų** (`app/build/test-results/testDebugUnitTest`), Android Lint **0 klaidų / 33 įspėjimai**. Dabartinės 1920×1080 ekrano nuotraukos atnaujintos `docs/screenshots/current/`. (Ankstesnis 2026-10-30 etapas turėjo 99 testus; žr. `docs/2026-10-30-radio-update.md`.)
 - README, ekrano nuotraukos, logotipas, TV baneris, AI autorystės disclosure.
 - Išvalyta prieš išleidimą: pašalintas ekvalaizerio kodas, nenaudojami piešiniai, `Coil`, `material3`, `viewmodel-compose`, `roborazzi`, instrumentation testų priklausomybės ir visi `Fogwave` pavadinimai kode (`RadijasPlaybackService`, `Theme.Radijas`, `radijas_prefs`).
 
